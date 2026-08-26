@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="_ds/nocturne-c052f9f5-353a-47b3-9d15-ff9bbde27b03/styles.css">
+<style>
+  html, body { margin: 0; padding: 0; background: var(--color-bg); }
+  :root {
+    --c-line: var(--color-neutral-800);
+    --c-muted: var(--color-neutral-500);
+    --c-paper: var(--color-neutral-900);
+    --c-tile: var(--color-neutral-800);
+    --c-tile-cut: var(--color-accent-800);
+    --c-tile-line: var(--color-neutral-600);
+    --c-input: var(--color-bg);
+    --c-3d-floor: var(--color-neutral-700);
+    --c-3d-wall: var(--color-neutral-600);
+    --c-3d-cut: #6f5fb8;
+    --c-3d-grout: var(--color-neutral-900);
+  }
+  :root[data-theme="light"] {
+    --color-bg: #e4e7f5;
+    --color-surface: #f3f5fe;
+    --color-text: #292b31;
+    --color-accent: #796cbf;
+    --color-divider: color-mix(in srgb, #292b31 14%, transparent);
+    --c-line: var(--color-neutral-300);
+    --c-muted: var(--color-neutral-600);
+    --c-paper: var(--color-neutral-100);
+    --c-tile: var(--color-neutral-200);
+    --c-tile-cut: var(--color-accent-300);
+    --c-tile-line: var(--color-neutral-400);
+    --c-input: #fbfcff;
+    --c-3d-floor: var(--color-neutral-300);
+    --c-3d-wall: var(--color-neutral-100);
+    --c-3d-cut: #cdc6f2;
+    --c-3d-grout: var(--color-neutral-500);
+  }
+  a { color: var(--color-accent); }
+  a:hover { color: var(--color-accent-400); }
+  input:focus-visible, button:focus-visible, select:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+  ::selection { background: color-mix(in srgb, var(--color-accent) 35%, transparent); }
+  @page { size: A4 landscape; margin: 10mm; }
+  @media print {
+    :root, :root[data-theme="dark"] {
+      --color-bg: #ffffff; --color-surface: #ffffff; --color-text: #1a1a1f;
+      --c-line: #b2b6ca; --c-muted: #595d6c; --c-paper: #ffffff;
+      --c-tile: #f3f5fe; --c-tile-cut: #e7e5fe; --c-tile-line: #75798c;
+      --color-accent: #5d5294; --color-divider: #cfd3e5;
+    }
+    [data-noprint] { display: none !important; }
+    [data-sheet] { break-inside: avoid; page-break-inside: avoid; }
+  }
+</style>
+</helmet>
+
+<div style="min-height: 100vh; background: var(--color-bg); color: var(--color-text); font-family: var(--font-body); font-size: 13px; line-height: 1.45; -webkit-font-smoothing: antialiased;">
+  <div style="max-width: 1560px; margin: 0 auto; padding: var(--space-8) var(--space-8) 64px; display: flex; flex-direction: column; gap: var(--space-8);">
+
+    <div data-noprint="1" style="display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-6); padding-bottom: var(--space-4); border-bottom: 1px solid var(--color-divider);">
+      <div style="display: flex; flex-direction: column; gap: 2px;">
+        <div data-en="Tile layout planner" style="font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--c-muted);">Раскладка плитки</div>
+        <div data-en="Bathroom · project 04" style="font-family: var(--font-heading); font-weight: 500; font-size: 24px; letter-spacing: -0.01em;">Санузел · проект 04</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: var(--space-6);">
+        <div style="display: flex; border: 1px solid var(--c-line); border-radius: var(--radius-sm); overflow: hidden;">
+          <button type="button" onClick="{{ setRu }}" style="{{ langRuStyle }}">RU</button>
+          <button type="button" onClick="{{ setEn }}" style="{{ langEnStyle }}">EN</button>
+        </div>
+        <button type="button" onClick="{{ toggleTheme }}" style="display: inline-flex; align-items: center; gap: var(--space-2); background: transparent; color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 10px; font: inherit; font-size: 12px; cursor: pointer;" style-hover="background: color-mix(in srgb, var(--color-accent) 12%, transparent); border-color: var(--color-accent);">
+          <i class="ph ph-circle-half" style="font-size: 15px; color: var(--color-accent);"></i>
+          <span data-en="Theme">Тема</span>
+        </button>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(560px, 1fr)); gap: var(--space-8); align-items: start;">
+
+      <section data-noprint="1" style="background: var(--color-surface); border: 1px solid var(--c-line); border-radius: var(--radius-md); padding: var(--space-6); display: flex; flex-direction: column; gap: var(--space-4);">
+        <div style="display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;">
+          <div style="width: 20px; height: 20px; border: 1px solid var(--color-accent); border-radius: 3px; color: var(--color-accent); display: grid; place-items: center; font-size: 11px;">1</div>
+          <div data-en="Room design" style="font-family: var(--font-heading); font-weight: 500; font-size: 15px;">Проектирование</div>
+          <div style="margin-left: auto; display: flex; align-items: center; gap: var(--space-3);">
+            <span data-en="Wall height, mm" style="font-size: 11px; color: var(--c-muted);">Высота стен, мм</span>
+            <input type="number" value="{{ roomH }}" onChange="{{ onRoomH }}" style="width: 82px; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 5px 8px; font: inherit; font-size: 12px; text-align: right;"></input>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: minmax(0, 1fr) 190px; gap: var(--space-4); align-items: start;">
+          <div id="planBox" style="position: relative; background: var(--c-paper); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: var(--space-3); min-width: 0;">
+            {{ planSvg }}
+            <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+              <div style="{{ menuStyle }}">
+                <sc-for list="{{ menuItems }}" as="it" hint-placeholder-count="3">
+                  <button type="button" onClick="{{ it.act }}" style="display: block; width: 100%; text-align: left; background: transparent; color: var(--color-text); border: 0; padding: 6px 12px; font: inherit; font-size: 12px; cursor: pointer; white-space: nowrap;" style-hover="background: color-mix(in srgb, var(--color-accent) 16%, transparent); color: var(--color-accent);">{{ it.label }}</button>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: var(--space-3); min-width: 0;">
+            <div style="display: flex; align-items: baseline; gap: var(--space-2); border-bottom: 1px solid var(--color-divider); padding-bottom: 4px;">
+              <span data-en="Selection" style="font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--c-muted);">Объект</span>
+              <span style="margin-left: auto; font-size: 11px; color: var(--color-accent);">{{ sel.title }}</span>
+            </div>
+
+            <sc-if value="{{ sel.isWall }}" hint-placeholder-val="{{ true }}">
+              <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                <label style="display: flex; flex-direction: column; gap: 3px;">
+                  <span data-en="Length, mm" style="font-size: 11px; color: var(--c-muted);">Длина, мм</span>
+                  <input type="number" value="{{ sel.len }}" onChange="{{ sel.onLen }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input>
+                </label>
+                <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--c-muted);">
+                  <span data-en="openings">проёмов</span>
+                  <span style="color: var(--color-text);">{{ sel.opCount }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--c-muted);">
+                  <span data-en="tiles">плиток</span>
+                  <span style="color: var(--color-text);">{{ sel.tiles }}</span>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ sel.isOp }}" hint-placeholder-val="{{ false }}">
+              <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                <label style="display: flex; flex-direction: column; gap: 3px;">
+                  <span data-en="Width, mm" style="font-size: 11px; color: var(--c-muted);">Ширина, мм</span>
+                  <input type="number" value="{{ sel.w }}" onChange="{{ sel.onW }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input>
+                </label>
+                <label style="display: flex; flex-direction: column; gap: 3px;">
+                  <span data-en="Height, mm" style="font-size: 11px; color: var(--c-muted);">Высота, мм</span>
+                  <input type="number" value="{{ sel.h }}" onChange="{{ sel.onH }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input>
+                </label>
+                <label style="display: flex; flex-direction: column; gap: 3px;">
+                  <span data-en="From floor, mm" style="font-size: 11px; color: var(--c-muted);">От пола, мм</span>
+                  <input type="number" value="{{ sel.sill }}" onChange="{{ sel.onSill }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input>
+                </label>
+                <label style="display: flex; flex-direction: column; gap: 3px;">
+                  <span data-en="From wall start, mm" style="font-size: 11px; color: var(--c-muted);">От начала стены, мм</span>
+                  <input type="number" value="{{ sel.off }}" onChange="{{ sel.onOff }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input>
+                </label>
+                <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--c-muted);">
+                  <span data-en="on wall">на стене</span>
+                  <span style="color: var(--color-text);">{{ sel.wallName }}</span>
+                </div>
+              </div>
+            </sc-if>
+
+            <div data-en="Click a wall or an opening to edit it. Right-click for the context menu: add an opening, add a wall, delete the object. Drag the corner nodes to reshape the outline." style="font-size: 11px; color: var(--c-muted); border-top: 1px solid var(--color-divider); padding-top: var(--space-3);">Кликните стену или проём, чтобы задать параметры. Правая кнопка — контекстное меню: добавить проём, стену, удалить объект. Узлы углов тянутся мышью.</div>
+          </div>
+        </div>
+      </section>
+
+      <section data-noprint="1" style="background: var(--color-surface); border: 1px solid var(--c-line); border-radius: var(--radius-md); padding: var(--space-6); display: flex; flex-direction: column; gap: var(--space-4);">
+        <div style="display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;">
+          <div style="width: 20px; height: 20px; border: 1px solid var(--color-accent); border-radius: 3px; color: var(--color-accent); display: grid; place-items: center; font-size: 11px;">2</div>
+          <div data-en="3D view" style="font-family: var(--font-heading); font-weight: 500; font-size: 15px;">3D-визуализация</div>
+          <div style="margin-left: auto; display: flex; align-items: center; gap: var(--space-2); font-size: 11px; color: var(--c-muted);">
+            <span style="width: 10px; height: 10px; background: var(--c-3d-cut); border: 1px solid var(--c-tile-line); display: inline-block;"></span>
+            <span data-en="cut tiles">резаные плитки</span>
+          </div>
+        </div>
+        <div id="room3d" style="height: 470px; background: var(--c-paper); border: 1px solid var(--c-line); border-radius: var(--radius-sm); overflow: hidden;"></div>
+        <div data-en="drag to orbit · scroll to zoom" style="font-size: 11px; color: var(--c-muted);">вращение мышью · колесо — масштаб</div>
+      </section>
+    </div>
+
+    <section data-noprint="1" style="background: var(--color-surface); border: 1px solid var(--c-line); border-radius: var(--radius-md); padding: var(--space-6); display: flex; flex-direction: column; gap: var(--space-6);">
+      <div style="display: flex; align-items: center; gap: var(--space-3);">
+        <div style="width: 20px; height: 20px; border: 1px solid var(--color-accent); border-radius: 3px; color: var(--color-accent); display: grid; place-items: center; font-size: 11px;">3</div>
+        <div data-en="Tile settings and take-off" style="font-family: var(--font-heading); font-weight: 500; font-size: 15px;">Настройки и расчёт</div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: var(--space-8);">
+
+        <div style="display: flex; flex-direction: column; gap: var(--space-4);">
+          <div data-en="Floor tile" style="font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--c-muted);">Плитка пола</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+            <label style="display: flex; flex-direction: column; gap: 3px;"><span data-en="Width, mm" style="font-size: 11px; color: var(--c-muted);">Ширина, мм</span><input type="number" value="{{ floorW }}" onChange="{{ onFloorW }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input></label>
+            <label style="display: flex; flex-direction: column; gap: 3px;"><span data-en="Height, mm" style="font-size: 11px; color: var(--c-muted);">Высота, мм</span><input type="number" value="{{ floorH }}" onChange="{{ onFloorH }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input></label>
+            <label style="display: flex; flex-direction: column; gap: 3px;"><span data-en="Thickness, mm" style="font-size: 11px; color: var(--c-muted);">Толщина, мм</span><input type="number" value="{{ floorT }}" onChange="{{ onFloorT }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input></label>
+            <label style="display: flex; flex-direction: column; gap: 3px;"><span data-en="Joint, mm" style="font-size: 11px; color: var(--c-muted);">Шов, мм</span><input type="number" value="{{ floorJ }}" onChange="{{ onFloorJ }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input></label>
+          </div>
+          <label style="display: flex; flex-direction: column; gap: 3px;">
+            <span data-en="Layout" style="font-size: 11px; color: var(--c-muted);">Тип раскладки</span>
+            <select value="{{ floorType }}" onChange="{{ onFloorType }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;">
+              <option value="grid" data-en="Straight (grid)">Правильная (шов в шов)</option>
+              <option value="brick" data-en="Running bond">Деревенская (вразбежку)</option>
+              <option value="diag" data-en="Diagonal 45°">Диагональная 45°</option>
+            </select>
+          </label>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: var(--space-4);">
+          <div data-en="Wall tile" style="font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--c-muted);">Плитка стен</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+            <label style="display: flex; flex-direction: column; gap: 3px;"><span data-en="Width, mm" style="font-size: 11px; color: var(--c-muted);">Ширина, мм</span><input type="number" value="{{ wallW }}" onChange="{{ onWallW }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input></label>
+            <label style="display: flex; flex-direction: column; gap: 3px;"><span data-en="Height, mm" style="font-size: 11px; color: var(--c-muted);">Высота, мм</span><input type="number" value="{{ wallH }}" onChange="{{ onWallH }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input></label>
+            <label style="display: flex; flex-direction: column; gap: 3px;"><span data-en="Thickness, mm" style="font-size: 11px; color: var(--c-muted);">Толщина, мм</span><input type="number" value="{{ wallT }}" onChange="{{ onWallT }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input></label>
+            <label style="display: flex; flex-direction: column; gap: 3px;"><span data-en="Joint, mm" style="font-size: 11px; color: var(--c-muted);">Шов, мм</span><input type="number" value="{{ wallJ }}" onChange="{{ onWallJ }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input></label>
+          </div>
+          <label style="display: flex; flex-direction: column; gap: 3px;">
+            <span data-en="Layout" style="font-size: 11px; color: var(--c-muted);">Тип раскладки</span>
+            <select value="{{ wallType }}" onChange="{{ onWallType }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;">
+              <option value="grid" data-en="Straight (grid)">Правильная (шов в шов)</option>
+              <option value="brick" data-en="Running bond">Деревенская (вразбежку)</option>
+              <option value="diag" data-en="Diagonal 45°">Диагональная 45°</option>
+            </select>
+          </label>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: var(--space-4);">
+          <div data-en="Totals" style="font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--c-muted);">Итого плиток</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+            <div style="border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: var(--space-4);">
+              <div style="font-family: var(--font-heading); font-size: 26px; letter-spacing: -0.02em;">{{ totals.floor }}</div>
+              <div data-en="floor tiles" style="font-size: 11px; color: var(--c-muted);">плиток пола</div>
+              <div style="font-size: 11px; color: var(--color-accent); margin-top: 4px;">{{ totals.floorArea }}</div>
+            </div>
+            <div style="border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: var(--space-4);">
+              <div style="font-family: var(--font-heading); font-size: 26px; letter-spacing: -0.02em;">{{ totals.wall }}</div>
+              <div data-en="wall tiles" style="font-size: 11px; color: var(--c-muted);">плиток стен</div>
+              <div style="font-size: 11px; color: var(--color-accent); margin-top: 4px;">{{ totals.wallArea }}</div>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px; border-top: 1px solid var(--color-divider); padding-top: var(--space-3);">
+            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--c-muted);">
+              <span data-en="whole / cut">целых / резаных</span>
+              <span style="color: var(--color-text);">{{ totals.wholeCut }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--c-muted);">
+              <span data-en="tile area bought">закуплено плитки</span>
+              <span style="color: var(--color-text);">{{ totals.bought }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: var(--space-3); min-width: 0;">
+          <div data-en="Off-cuts" style="font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--c-muted);">Остатки</div>
+          <div style="display: grid; grid-template-columns: 1fr 84px 46px; gap: var(--space-2); margin-right: 10px; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--c-muted); padding-bottom: 3px; border-bottom: 1px solid var(--c-line);">
+            <span data-en="Surface">Поверхность</span>
+            <span data-en="Size, mm" style="text-align: right;">Размер, мм</span>
+            <span data-en="Qty" style="text-align: right;">Кол-во</span>
+          </div>
+          <div style="max-height: 214px; overflow: auto; scrollbar-gutter: stable; padding-right: 10px; display: flex; flex-direction: column;">
+            <sc-for list="{{ cuts }}" as="c" hint-placeholder-count="8">
+              <div style="display: grid; grid-template-columns: 1fr 84px 46px; gap: var(--space-2); font-size: 12px; padding: 4px 0; border-bottom: 1px solid var(--color-divider);">
+                <span style="color: var(--c-muted);">{{ c.where }}</span>
+                <span style="text-align: right; font-variant-numeric: tabular-nums;">{{ c.size }}</span>
+                <span style="text-align: right; color: var(--color-accent); font-variant-numeric: tabular-nums;">{{ c.n }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: baseline; margin-right: 10px; border-top: 1px solid var(--c-line); padding-top: var(--space-3);">
+            <span data-en="Area lost in cutting" style="font-size: 12px; color: var(--c-muted);">Потери площади</span>
+            <span style="font-size: 12px; color: var(--color-accent);">{{ totals.loss }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="background: var(--color-surface); border: 1px solid var(--c-line); border-radius: var(--radius-md); padding: var(--space-6); display: flex; flex-direction: column; gap: var(--space-6);">
+      <div style="display: flex; align-items: center; gap: var(--space-3);">
+        <div style="width: 20px; height: 20px; border: 1px solid var(--color-accent); border-radius: 3px; color: var(--color-accent); display: grid; place-items: center; font-size: 11px;">4</div>
+        <div data-en="Layout drawings" style="font-family: var(--font-heading); font-weight: 500; font-size: 15px;">Раскладка · чертёж</div>
+        <div data-en="A4 landscape · dimensions in mm" style="font-size: 11px; color: var(--c-muted);">A4 альбомная · размеры в мм</div>
+        <button type="button" data-noprint="1" onClick="{{ print }}" style="margin-left: auto; display: inline-flex; align-items: center; gap: var(--space-2); background: transparent; color: var(--color-accent); border: 1px solid var(--color-accent); border-radius: var(--radius-sm); padding: 7px 14px; font: inherit; font-size: 12px; cursor: pointer;" style-hover="background: color-mix(in srgb, var(--color-accent) 14%, transparent);">
+          <i class="ph ph-printer" style="font-size: 15px;"></i>
+          <span data-en="Print">Печать</span>
+        </button>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: var(--space-8);">
+        <div data-sheet="1" style="display: flex; flex-direction: column; gap: var(--space-3); background: var(--c-paper); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: var(--space-6);">
+          <div style="display: flex; align-items: baseline; gap: var(--space-3); border-bottom: 1px solid var(--color-divider); padding-bottom: var(--space-2);">
+            <span data-en="Floor" style="font-family: var(--font-heading); font-size: 13px;">Пол</span>
+            <span style="font-size: 11px; color: var(--c-muted);">{{ floorSheet.spec }}</span>
+            <span style="margin-left: auto; font-size: 11px; color: var(--color-accent);">{{ floorSheet.count }}</span>
+          </div>
+          <div style="display: block; min-width: 0;">{{ floorSvg }}</div>
+        </div>
+
+        <sc-for list="{{ wallSheets }}" as="s" hint-placeholder-count="4">
+          <div data-sheet="1" style="display: flex; flex-direction: column; gap: var(--space-3); background: var(--c-paper); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: var(--space-6);">
+            <div style="display: flex; align-items: baseline; gap: var(--space-3); border-bottom: 1px solid var(--color-divider); padding-bottom: var(--space-2);">
+              <span style="font-family: var(--font-heading); font-size: 13px;">{{ s.title }}</span>
+              <span style="font-size: 11px; color: var(--c-muted);">{{ s.spec }}</span>
+              <span style="margin-left: auto; font-size: 11px; color: var(--color-accent);">{{ s.count }}</span>
+            </div>
+            <div style="display: block; min-width: 0;">{{ s.svg }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;defaultTheme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;'light'|'dark'&quot;},&quot;roomPreset&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;l&quot;,&quot;rect&quot;],&quot;default&quot;:&quot;l&quot;,&quot;tsType&quot;:&quot;'l'|'rect'&quot;},&quot;showTileNumbers&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+function polyArea(pts) {
+  let a = 0;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    a += pts[j][0] * pts[i][1] - pts[i][0] * pts[j][1];
+  }
+  return Math.abs(a) / 2;
+}
+
+// Sutherland–Hodgman clip against an axis-aligned rectangle.
+function clipRect(pts, r) {
+  const edges = [
+    (p) => p[0] >= r[0], (p) => p[0] <= r[2],
+    (p) => p[1] >= r[1], (p) => p[1] <= r[3]
+  ];
+  const inter = [
+    (a, b) => [r[0], a[1] + ((b[1] - a[1]) * (r[0] - a[0])) / (b[0] - a[0])],
+    (a, b) => [r[2], a[1] + ((b[1] - a[1]) * (r[2] - a[0])) / (b[0] - a[0])],
+    (a, b) => [a[0] + ((b[0] - a[0]) * (r[1] - a[1])) / (b[1] - a[1]), r[1]],
+    (a, b) => [a[0] + ((b[0] - a[0]) * (r[3] - a[1])) / (b[1] - a[1]), r[3]]
+  ];
+  let cur = pts;
+  for (let e = 0; e < 4; e++) {
+    const next = [];
+    for (let i = 0; i < cur.length; i++) {
+      const a = cur[(i + cur.length - 1) % cur.length], b = cur[i];
+      const ina = edges[e](a), inb = edges[e](b);
+      if (inb) {
+        if (!ina) next.push(inter[e](a, b));
+        next.push(b);
+      } else if (ina) {
+        next.push(inter[e](a, b));
+      }
+    }
+    cur = next;
+    if (!cur.length) return [];
+  }
+  return cur;
+}
+
+function rectPts(x, y, w, h) {
+  return [[x, y], [x + w, y], [x + w, y + h], [x, y + h]];
+}
+
+class Component extends DCLogic {
+  state = {
+    theme: 'light',
+    lang: 'ru',
+    poly: null,
+    ops: null,
+    roomH: 2600,
+    menu: null,
+    sel: { kind: 'wall', i: 0 },
+    floor: { w: 600, h: 600, t: 9, j: 2, type: 'grid' },
+    wall: { w: 300, h: 600, t: 8, j: 2, type: 'brick' }
+  };
+
+  componentDidMount() {
+    const t = this.props.defaultTheme || 'light';
+    document.documentElement.dataset.theme = t;
+    this.setState({ theme: t });
+    // Classic <script> loads (not ES modules) so this also works when the
+    // page is opened directly from disk (file://), where dynamic import()
+    // is blocked by the browser's CORS rules for modules.
+    this.loadScript('https://unpkg.com/three@0.160.0/build/three.min.js')
+      .then(() => this.loadScript('./room3d.js'))
+      .then(() => {
+        const el = document.getElementById('room3d');
+        if (!el || !window.createRoomView) return;
+        this.view = window.createRoomView(el);
+        this.push3d();
+      })
+      .catch((e) => console.warn('3D view unavailable', e));
+  }
+
+  loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const existing = document.querySelector(`script[data-src="${src}"]`);
+      if (existing) {
+        if (existing.dataset.loaded) resolve();
+        else existing.addEventListener('load', () => resolve());
+        return;
+      }
+      const s = document.createElement('script');
+      s.src = src;
+      s.dataset.src = src;
+      s.onload = () => { s.dataset.loaded = '1'; resolve(); };
+      s.onerror = (e) => reject(e);
+      document.head.appendChild(s);
+    });
+  }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps && prevProps.roomPreset !== this.props.roomPreset) {
+      this.setState({ poly: null, ops: null, sel: { kind: 'wall', i: 0 } });
+      return;
+    }
+    if (this.state.lang === 'en') this.applyLang('en');
+    this.push3d();
+  }
+
+  componentWillUnmount() {
+    if (this.view) this.view.dispose();
+  }
+
+  css(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#888';
+  }
+
+  push3d() {
+    if (!this.view || !this.last) return;
+    const r = this.last.room;
+    this.view.update({
+      poly: r.poly, H: r.H,
+      floor: { polys: this.last.floorPolys },
+      walls: r.walls.map((w, i) => ({ a: w.a, b: w.b, len: w.len, op: w.op, polys: this.last.wallPolys[i] || [] })),
+      colors: {
+        bg: this.css('--c-paper'),
+        floorTile: this.css('--c-3d-floor'),
+        wallTile: this.css('--c-3d-wall'),
+        cutTile: this.css('--c-3d-cut'),
+        grout: this.css('--c-3d-grout')
+      }
+    });
+  }
+
+  applyLang(lang) {
+    document.querySelectorAll('[data-en]').forEach((el) => {
+      if (!el.dataset.ru) el.dataset.ru = el.textContent;
+      const next = lang === 'en' ? el.dataset.en : el.dataset.ru;
+      if (el.textContent !== next) el.textContent = next;
+    });
+  }
+
+  setLang(lang) {
+    this.applyLang(lang);
+    this.setState({ lang });
+  }
+
+  toggleTheme = () => {
+    const t = this.state.theme === 'light' ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+    this.setState({ theme: t });
+  };
+
+  set(group, key, e) {
+    const v = Math.max(1, Math.min(3000, parseInt(e.target.value, 10) || 1));
+    this.setState((s) => ({ [group]: Object.assign({}, s[group], { [key]: v }) }));
+  }
+
+  preset() {
+    if ((this.props.roomPreset || 'l') === 'rect') {
+      return {
+        poly: [[0, 0], [3000, 0], [3000, 2200], [0, 2200]],
+        ops: [
+          { kind: 'win', wall: 0, id: 'О1', off: 900, w: 1400, sill: 900, h: 1400 },
+          { kind: 'door', wall: 2, id: 'Д1', off: 700, w: 900, sill: 0, h: 2100 }
+        ]
+      };
+    }
+    return {
+      poly: [[0, 0], [2400, 0], [2400, 1800], [1600, 1800], [1600, 3200], [0, 3200]],
+      ops: [
+        { kind: 'win', wall: 0, id: 'О1', off: 600, w: 1200, sill: 900, h: 1400 },
+        { kind: 'door', wall: 4, id: 'Д1', off: 400, w: 800, sill: 0, h: 2100 }
+      ]
+    };
+  }
+
+  poly() { return this.state.poly || this.preset().poly; }
+  ops() { return this.state.ops || this.preset().ops; }
+
+  room() {
+    const poly = this.poly();
+    const ops = this.ops();
+    const H = this.state.roomH;
+    const n = poly.length;
+    const walls = [];
+    for (let i = 0; i < n; i++) {
+      const a = poly[i], b = poly[(i + 1) % n];
+      const len = Math.round(Math.hypot(b[0] - a[0], b[1] - a[1]));
+      if (len <= 10) continue;
+      const op = [];
+      ops.forEach((o, oi) => {
+        if (o.wall !== i) return;
+        const w = Math.min(o.w, len - 100);
+        if (w < 200) return;
+        const off = Math.max(50, Math.min(o.off, len - w - 50));
+        const h = Math.min(o.h, H - 100);
+        op.push({ kind: o.kind, id: o.id, off, w, h, sill: Math.min(o.sill, H - h - 50), index: oi });
+      });
+      walls.push({ n: LETTERS[i] || 'W' + (i + 1), edge: i, a, b, len, op });
+    }
+    return { H, poly, walls, regions: this.regions(poly) };
+  }
+
+  regions(poly) {
+    const xs = Array.from(new Set(poly.map((p) => p[0]))).sort((a, b) => a - b);
+    const ys = Array.from(new Set(poly.map((p) => p[1]))).sort((a, b) => a - b);
+    const out = [];
+    for (let i = 0; i < xs.length - 1; i++) {
+      for (let j = 0; j < ys.length - 1; j++) {
+        const cx = (xs[i] + xs[i + 1]) / 2, cy = (ys[j] + ys[j + 1]) / 2;
+        if (this.inPoly([cx, cy], poly)) out.push([xs[i], ys[j], xs[i + 1], ys[j + 1]]);
+      }
+    }
+    return out.length ? out : [[0, 0, 1, 1]];
+  }
+
+  bbox() {
+    const p = this.poly();
+    const xs = p.map((q) => q[0]), ys = p.map((q) => q[1]);
+    const x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs);
+    const y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
+    return { x0, y0, x1, y1, w: x1 - x0, h: y1 - y0 };
+  }
+
+  inPoly(p, poly) {
+    let c = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const xi = poly[i][0], yi = poly[i][1], xj = poly[j][0], yj = poly[j][1];
+      if ((yi > p[1]) !== (yj > p[1]) && p[0] < ((xj - xi) * (p[1] - yi)) / (yj - yi) + xi) c = !c;
+    }
+    return c;
+  }
+
+  /* ---------- editing ---------- */
+
+  toUser(ev) {
+    const svg = document.getElementById('planSvg');
+    if (!svg || !svg.getScreenCTM) return null;
+    const m = svg.getScreenCTM().inverse();
+    const p = svg.createSVGPoint();
+    p.x = ev.clientX; p.y = ev.clientY;
+    return p.matrixTransform(m);
+  }
+
+  startDrag = (i, e) => {
+    if (e.button === 2) return;
+    e.preventDefault();
+    e.stopPropagation();
+    this.setState({ menu: null });
+    const move = (ev) => {
+      const p = this.toUser(ev);
+      if (p) this.moveVertex(i, p.x, p.y);
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+
+  moveVertex(i, x, y) {
+    const poly = this.poly().map((p) => p.slice());
+    const n = poly.length;
+    const prev = (i - 1 + n) % n, next = (i + 1) % n;
+    const snap = (v, others) => {
+      let best = Math.round(v / 25) * 25;
+      for (const o of others) if (Math.abs(o - v) < 90) best = o;
+      return best;
+    };
+    const others = poly.filter((_, k) => k !== i);
+    const nx = snap(x, others.map((p) => p[0]));
+    const ny = snap(y, others.map((p) => p[1]));
+    const ox = poly[i][0], oy = poly[i][1];
+    poly[i] = [nx, ny];
+    if (Math.abs(poly[prev][0] - ox) < 1) poly[prev][0] = nx;
+    else if (Math.abs(poly[prev][1] - oy) < 1) poly[prev][1] = ny;
+    if (Math.abs(poly[next][0] - ox) < 1) poly[next][0] = nx;
+    else if (Math.abs(poly[next][1] - oy) < 1) poly[next][1] = ny;
+    this.setState({ poly, ops: this.ops() });
+  }
+
+  setWallLength(edge, len) {
+    const poly = this.poly().map((p) => p.slice());
+    const n = poly.length;
+    const a = poly[edge], b = poly[(edge + 1) % n];
+    const cur = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    if (cur < 1) return;
+    const L = Math.max(300, Math.min(12000, Math.round(len / 25) * 25));
+    const ux = (b[0] - a[0]) / cur, uy = (b[1] - a[1]) / cur;
+    const d = L - cur;
+    const bi = (edge + 1) % n, ci = (edge + 2) % n;
+    poly[bi] = [Math.round(b[0] + ux * d), Math.round(b[1] + uy * d)];
+    const c = poly[ci];
+    poly[ci] = [Math.round(c[0] + ux * d), Math.round(c[1] + uy * d)];
+    this.setState({ poly, ops: this.ops() });
+  }
+
+  shiftOps(at, delta) {
+    return this.ops().map((o) => (o.wall >= at ? Object.assign({}, o, { wall: o.wall + delta }) : o));
+  }
+
+  setOp(index, key, value) {
+    const ops = this.ops().map((o, i) => (i === index ? Object.assign({}, o, { [key]: value }) : o));
+    this.setState({ ops, poly: this.poly() });
+  }
+
+  addOp(edge, kind) {
+    const room = this.room();
+    const w = room.walls.find((x) => x.edge === edge);
+    const len = w ? w.len : 2000;
+    const ops = this.ops().slice();
+    const nOfKind = ops.filter((o) => o.kind === kind).length + 1;
+    const spec = kind === 'door'
+      ? { w: Math.min(900, len - 200), h: Math.min(2100, this.state.roomH - 100), sill: 0, id: 'Д' + nOfKind }
+      : { w: Math.min(1200, len - 200), h: 1400, sill: 900, id: 'О' + nOfKind };
+    if (spec.w < 300) return this.setState({ menu: null });
+    ops.push({
+      kind, wall: edge, id: spec.id, w: spec.w, h: spec.h, sill: spec.sill,
+      off: Math.max(100, Math.round((len - spec.w) / 2 / 25) * 25)
+    });
+    this.setState({ ops, poly: this.poly(), menu: null, sel: { kind: 'op', i: ops.length - 1 } });
+  }
+
+  removeOp(index) {
+    const ops = this.ops().filter((_, i) => i !== index);
+    this.setState({ ops, poly: this.poly(), menu: null, sel: { kind: 'wall', i: 0 } });
+  }
+
+  addNode(i, ux, uy) {
+    const poly = this.poly().map((p) => p.slice());
+    const a = poly[i], b = poly[(i + 1) % poly.length];
+    const horiz = Math.abs(a[1] - b[1]) < 1;
+    const pt = horiz
+      ? [Math.round(Math.max(Math.min(ux, Math.max(a[0], b[0])), Math.min(a[0], b[0])) / 25) * 25, a[1]]
+      : [a[0], Math.round(Math.max(Math.min(uy, Math.max(a[1], b[1])), Math.min(a[1], b[1])) / 25) * 25];
+    poly.splice(i + 1, 0, pt);
+    this.setState({ poly, ops: this.shiftOps(i + 1, 1), menu: null });
+  }
+
+  addWall(i, fromNode) {
+    const poly = this.poly().map((p) => p.slice());
+    const n = poly.length;
+    const a = poly[i], b = poly[(i + 1) % n];
+    const L = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    if (L < 700) return this.setState({ menu: null });
+    const ux = (b[0] - a[0]) / L, uy = (b[1] - a[1]) / L;
+    const nx = uy, ny = -ux;
+    const depth = 600;
+    const seg = Math.min(800, Math.round((L - 200) / 2 / 25) * 25);
+    const start = fromNode ? 100 : Math.round((L - seg) / 2 / 25) * 25;
+    const p1 = [Math.round(a[0] + ux * start), Math.round(a[1] + uy * start)];
+    const p2 = [Math.round(p1[0] + nx * depth), Math.round(p1[1] + ny * depth)];
+    const p3 = [Math.round(p2[0] + ux * seg), Math.round(p2[1] + uy * seg)];
+    const p4 = [Math.round(p3[0] - nx * depth), Math.round(p3[1] - ny * depth)];
+    poly.splice(i + 1, 0, p1, p2, p3, p4);
+    this.setState({ poly, ops: this.shiftOps(i + 1, 4), menu: null });
+  }
+
+  removeNode(i) {
+    const poly = this.poly().map((p) => p.slice());
+    if (poly.length <= 4) return this.setState({ menu: null });
+    const n = poly.length;
+    const prev = poly[(i - 1 + n) % n];
+    const removed = poly[i];
+    const next = poly[(i + 1) % n];
+    if (Math.abs(prev[0] - removed[0]) < 1) next[0] = prev[0];
+    else next[1] = prev[1];
+    poly.splice(i, 1);
+    this.setState({
+      poly,
+      ops: this.shiftOps(i + 1, -1).filter((o) => o.wall >= 0),
+      menu: null, sel: { kind: 'wall', i: 0 }
+    });
+  }
+
+  resetOutline() {
+    this.setState({ poly: null, ops: null, menu: null, sel: { kind: 'wall', i: 0 } });
+  }
+
+  select = (kind, i, e) => {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    this.setState({ sel: { kind, i }, menu: null });
+  };
+
+  openMenu = (kind, i, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const box = document.getElementById('planBox');
+    const p = this.toUser(e);
+    const r = box ? box.getBoundingClientRect() : { left: 0, top: 0 };
+    const sel = kind === 'edge' ? { kind: 'wall', i } : (kind === 'op' ? { kind: 'op', i } : this.state.sel);
+    this.setState({
+      sel,
+      menu: { kind, i, x: e.clientX - r.left, y: e.clientY - r.top, ux: p ? p.x : 0, uy: p ? p.y : 0 }
+    });
+    setTimeout(() => {
+      const close = () => {
+        this.setState({ menu: null });
+        window.removeEventListener('pointerdown', close);
+      };
+      window.addEventListener('pointerdown', close);
+    }, 0);
+  };
+
+  /* ---------- tiling ---------- */
+
+  mergeRects(list) {
+    const p = list.map((q) => Object.assign({}, q));
+    let changed = true;
+    while (changed) {
+      changed = false;
+      outer:
+      for (let i = 0; i < p.length; i++) {
+        for (let j = i + 1; j < p.length; j++) {
+          const a = p[i], b = p[j];
+          if (Math.abs(a.x - b.x) < 1 && Math.abs(a.w - b.w) < 1 &&
+            (Math.abs(a.y + a.h - b.y) < 2 || Math.abs(b.y + b.h - a.y) < 2)) {
+            p.splice(j, 1); p[i] = { x: a.x, y: Math.min(a.y, b.y), w: a.w, h: a.h + b.h };
+            changed = true; break outer;
+          }
+          if (Math.abs(a.y - b.y) < 1 && Math.abs(a.h - b.h) < 1 &&
+            (Math.abs(a.x + a.w - b.x) < 2 || Math.abs(b.x + b.w - a.x) < 2)) {
+            p.splice(j, 1); p[i] = { x: Math.min(a.x, b.x), y: a.y, w: a.w + b.w, h: a.h };
+            changed = true; break outer;
+          }
+        }
+      }
+    }
+    return p;
+  }
+
+  floorTiles() {
+    const f = this.state.floor;
+    const r = this.room();
+    const bb = this.bbox();
+    const px = f.w + f.j, py = f.h + f.j;
+    const tileArea = f.w * f.h;
+    const out = [];
+
+    if (f.type === 'diag') {
+      const cx = (bb.x0 + bb.x1) / 2, cy = (bb.y0 + bb.y1) / 2;
+      const R = Math.hypot(bb.w, bb.h) / 2 + Math.max(px, py) * 1.5;
+      const cos = Math.SQRT1_2, sin = Math.SQRT1_2;
+      const cols = Math.ceil((2 * R) / px) + 2, rows = Math.ceil((2 * R) / py) + 2;
+      for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < cols; j++) {
+          const u = -R + j * px, v = -R + i * py;
+          const cs = [[u, v], [u + f.w, v], [u + f.w, v + f.h], [u, v + f.h]]
+            .map((q) => [cx + q[0] * cos - q[1] * sin, cy + q[0] * sin + q[1] * cos]);
+          const polys = [];
+          let used = 0;
+          r.regions.forEach((reg) => {
+            const c = clipRect(cs, reg);
+            if (c.length > 2) {
+              const a = polyArea(c);
+              if (a > 500) { polys.push(c); used += a; }
+            }
+          });
+          if (!polys.length) continue;
+          const xs = polys.flat().map((q) => q[0]), ys = polys.flat().map((q) => q[1]);
+          out.push({
+            polys, used, tileArea, diag: true,
+            full: used >= tileArea - 1000,
+            w: Math.round((Math.max.apply(null, xs) - Math.min.apply(null, xs)) / 5) * 5,
+            h: Math.round((Math.max.apply(null, ys) - Math.min.apply(null, ys)) / 5) * 5,
+            L: polys.length > 1
+          });
+        }
+      }
+      return out;
+    }
+
+    const rows = Math.ceil((bb.h + f.j) / py) + 1;
+    const cols = Math.ceil((bb.w + f.j) / px) + 2;
+    for (let i = 0; i < rows; i++) {
+      const off = f.type === 'brick' ? (i % 2) * (px / 2) : 0;
+      for (let j = -1; j < cols; j++) {
+        const x0 = bb.x0 + off + j * px, y0 = bb.y0 + i * py;
+        let pieces = [];
+        r.regions.forEach((reg) => {
+          const ax = Math.max(x0, reg[0]), ay = Math.max(y0, reg[1]);
+          const bx = Math.min(x0 + f.w, reg[2]), by = Math.min(y0 + f.h, reg[3]);
+          if (bx - ax > 1 && by - ay > 1) pieces.push({ x: ax, y: ay, w: bx - ax, h: by - ay });
+        });
+        if (!pieces.length) continue;
+        pieces = this.mergeRects(pieces);
+        const used = pieces.reduce((a, p) => a + p.w * p.h, 0);
+        out.push({
+          polys: pieces.map((p) => rectPts(p.x, p.y, p.w, p.h)),
+          used, tileArea, diag: false,
+          full: pieces.length === 1 && pieces[0].w >= f.w - 1 && pieces[0].h >= f.h - 1,
+          w: Math.round(Math.max.apply(null, pieces.map((p) => p.w))),
+          h: Math.round(Math.max.apply(null, pieces.map((p) => p.h))),
+          L: pieces.length > 1,
+          center: [pieces[0].x + pieces[0].w / 2, pieces[0].y + pieces[0].h / 2]
+        });
+      }
+    }
+    return out;
+  }
+
+  subtract(t, ops) {
+    let cur = [t];
+    for (const o of ops) {
+      const ox0 = o.off, ox1 = o.off + o.w, oy0 = o.sill, oy1 = o.sill + o.h;
+      const next = [];
+      for (const p of cur) {
+        const ax = Math.max(p.x, ox0), ay = Math.max(p.y, oy0);
+        const bx = Math.min(p.x + p.w, ox1), by = Math.min(p.y + p.h, oy1);
+        if (bx - ax <= 1 || by - ay <= 1) { next.push(p); continue; }
+        if (ax - p.x > 1) next.push({ x: p.x, y: p.y, w: ax - p.x, h: p.h });
+        if (p.x + p.w - bx > 1) next.push({ x: bx, y: p.y, w: p.x + p.w - bx, h: p.h });
+        const mw = bx - ax;
+        if (ay - p.y > 1) next.push({ x: ax, y: p.y, w: mw, h: ay - p.y });
+        if (p.y + p.h - by > 1) next.push({ x: ax, y: by, w: mw, h: p.y + p.h - by });
+      }
+      cur = next;
+    }
+    return cur;
+  }
+
+  wallTiles(len, H, ops) {
+    const w = this.state.wall;
+    const tileArea = w.w * w.h;
+    const px = w.w + w.j, py = w.h + w.j;
+    const out = [];
+    if (w.type === 'diag') {
+      const cos = Math.SQRT1_2, sin = Math.SQRT1_2;
+      const R = Math.hypot(len, H) / 2 + Math.max(px, py) * 1.5;
+      const cx = len / 2, cy = H / 2;
+      const cols = Math.ceil((2 * R) / px) + 2, rows = Math.ceil((2 * R) / py) + 2;
+      const holes = ops.map((o) => [o.off, o.sill, o.off + o.w, o.sill + o.h]);
+      for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < cols; j++) {
+          const u = -R + j * px, v = -R + i * py;
+          const cs = [[u, v], [u + w.w, v], [u + w.w, v + w.h], [u, v + w.h]]
+            .map((q) => [cx + q[0] * cos - q[1] * sin, cy + q[0] * sin + q[1] * cos]);
+          const c = clipRect(cs, [0, 0, len, H]);
+          if (c.length < 3) continue;
+          let used = polyArea(c);
+          if (used < 500) continue;
+          holes.forEach((hr) => {
+            const h = clipRect(c, hr);
+            if (h.length > 2) used -= polyArea(h);
+          });
+          if (used < 500) continue;
+          out.push({
+            polys: [c], used, tileArea, full: used >= tileArea - 1000,
+            w: w.w, h: w.h, diag: true
+          });
+        }
+      }
+      return out;
+    }
+    const rows = Math.ceil((H + w.j) / py);
+    for (let i = 0; i < rows; i++) {
+      const y0 = i * py;
+      const hh = Math.min(w.h, H - y0);
+      if (hh < 2) continue;
+      const off = w.type === 'brick' ? (i % 2) * (px / 2) : 0;
+      for (let x = off - px; x < len - 1; x += px) {
+        const x0 = Math.max(x, 0), x1 = Math.min(x + w.w, len);
+        const ww = x1 - x0;
+        if (ww < 2) continue;
+        const pieces = this.subtract({ x: x0, y: y0, w: ww, h: hh }, ops);
+        if (!pieces.length) continue;
+        const merged = this.mergeRects(pieces);
+        const used = merged.reduce((a, p) => a + p.w * p.h, 0);
+        out.push({
+          polys: merged.map((p) => rectPts(p.x, p.y, p.w, p.h)),
+          rects: merged, used, tileArea, diag: false,
+          full: merged.length === 1 && ww >= w.w - 1 && hh >= w.h - 1,
+          w: Math.round(Math.max.apply(null, merged.map((p) => p.w))),
+          h: Math.round(Math.max.apply(null, merged.map((p) => p.h)))
+        });
+      }
+    }
+    return out;
+  }
+
+  /* ---------- drawing helpers ---------- */
+
+  hDim(x1, x2, y, label, below) {
+    return {
+      ax: x1, ay: y, bx: x2, by: y,
+      t1ax: x1, t1ay: y - 60, t1bx: x1, t1by: y + 60,
+      t2ax: x2, t2ay: y - 60, t2bx: x2, t2by: y + 60,
+      tx: (x1 + x2) / 2, ty: below ? y + 170 : y - 60, anchor: 'middle', label: String(Math.round(label))
+    };
+  }
+
+  vDim(y1, y2, x, label, right) {
+    return {
+      ax: x, ay: y1, bx: x, by: y2,
+      t1ax: x - 60, t1ay: y1, t1bx: x + 60, t1by: y1,
+      t2ax: x - 60, t2ay: y2, t2bx: x + 60, t2by: y2,
+      tx: right ? x + 80 : x - 80, ty: (y1 + y2) / 2 + 38, anchor: right ? 'start' : 'end', label: String(Math.round(label))
+    };
+  }
+
+  dimEls(dims, key) {
+    const E = React.createElement;
+    return dims.filter((d) => Math.abs(Number(d.label)) > 0).map((d, i) => E('g', { key: key + i },
+      E('line', { x1: d.ax, y1: d.ay, x2: d.bx, y2: d.by, stroke: 'var(--c-muted)', strokeWidth: 10 }),
+      E('line', { x1: d.t1ax, y1: d.t1ay, x2: d.t1bx, y2: d.t1by, stroke: 'var(--c-muted)', strokeWidth: 10 }),
+      E('line', { x1: d.t2ax, y1: d.t2ay, x2: d.t2bx, y2: d.t2by, stroke: 'var(--c-muted)', strokeWidth: 10 }),
+      E('text', { x: d.tx, y: d.ty, fontSize: 105, fill: 'var(--color-text)', textAnchor: d.anchor }, d.label)
+    ));
+  }
+
+  renderVals() {
+    const s = this.state;
+    const r = this.room();
+    const bb = this.bbox();
+    const en = s.lang === 'en';
+    const E = React.createElement;
+    const seg = (on) => 'background:' + (on ? 'color-mix(in srgb, var(--color-accent) 18%, transparent)' : 'transparent') +
+      ';color:' + (on ? 'var(--color-accent)' : 'var(--c-muted)') +
+      ';border:0;border-right:1px solid var(--c-line);padding:6px 10px;font:inherit;font-size:11px;cursor:pointer;';
+
+    const pad = 620;
+    const vb = [bb.x0 - pad, bb.y0 - pad, bb.w + pad * 2, bb.h + pad * 2].join(' ');
+    const pts = r.poly.map((p) => p[0] + ',' + p[1]).join(' ');
+
+    const dims = [], labels = [], openings = [];
+    r.walls.forEach((w) => {
+      const dx = w.b[0] - w.a[0], dy = w.b[1] - w.a[1];
+      const L = Math.hypot(dx, dy);
+      const nx = dy / L, ny = -dx / L;
+      const o = 260;
+      const ax = w.a[0] + nx * o, ay = w.a[1] + ny * o;
+      const bx = w.b[0] + nx * o, by = w.b[1] + ny * o;
+      dims.push({
+        ax, ay, bx, by,
+        t1ax: ax - nx * 70, t1ay: ay - ny * 70, t1bx: ax + nx * 70, t1by: ay + ny * 70,
+        t2ax: bx - nx * 70, t2ay: by - ny * 70, t2bx: bx + nx * 70, t2by: by + ny * 70,
+        tx: (ax + bx) / 2 + nx * 150, ty: (ay + by) / 2 + ny * 150 + 38, anchor: 'middle', label: String(Math.round(L))
+      });
+      labels.push({ x: (w.a[0] + w.b[0]) / 2 - nx * 210, y: (w.a[1] + w.b[1]) / 2 - ny * 210 + 38, t: w.n });
+      w.op.forEach((op) => {
+        const ux = dx / L, uy = dy / L;
+        openings.push({
+          index: op.index,
+          x1: w.a[0] + ux * op.off, y1: w.a[1] + uy * op.off,
+          x2: w.a[0] + ux * (op.off + op.w), y2: w.a[1] + uy * (op.off + op.w),
+          tx: w.a[0] + ux * (op.off + op.w / 2) - nx * 430,
+          ty: w.a[1] + uy * (op.off + op.w / 2) - ny * 430 + 38,
+          label: op.id + ' · ' + op.w
+        });
+      });
+    });
+
+    const selWallEdge = s.sel && s.sel.kind === 'wall' ? s.sel.i : -1;
+    const selOpIndex = s.sel && s.sel.kind === 'op' ? s.sel.i : -1;
+
+    const planSvg = E('svg', {
+      id: 'planSvg', viewBox: vb, preserveAspectRatio: 'xMidYMid meet',
+      onContextMenu: (e) => this.openMenu('plan', -1, e),
+      style: { width: '100%', height: '430px', display: 'block', overflow: 'visible', touchAction: 'none' }
+    },
+      E('polygon', { key: 'poly', points: pts, fill: 'color-mix(in srgb, var(--color-accent) 8%, transparent)', stroke: 'var(--color-text)', strokeWidth: 26 }),
+      r.walls.map((w) => w.edge === selWallEdge
+        ? E('line', { key: 'selw', x1: w.a[0], y1: w.a[1], x2: w.b[0], y2: w.b[1], stroke: 'var(--color-accent)', strokeWidth: 70, strokeLinecap: 'square', opacity: 0.55 })
+        : null),
+      openings.map((o, i) => E('g', { key: 'op' + i },
+        E('line', { x1: o.x1, y1: o.y1, x2: o.x2, y2: o.y2, stroke: 'var(--c-paper)', strokeWidth: 52 }),
+        E('line', {
+          x1: o.x1, y1: o.y1, x2: o.x2, y2: o.y2,
+          stroke: 'var(--color-accent)', strokeWidth: o.index === selOpIndex ? 60 : 26
+        }),
+        E('text', { x: o.tx, y: o.ty, fontSize: 100, fill: 'var(--color-accent)', textAnchor: 'middle' }, o.label)
+      )),
+      labels.map((l, i) => E('text', { key: 'lb' + i, x: l.x, y: l.y, fontSize: 105, fill: 'var(--c-muted)', textAnchor: 'middle' }, l.t)),
+      this.dimEls(dims, 'pd'),
+      r.walls.map((w) => E('line', {
+        key: 'eh' + w.edge, x1: w.a[0], y1: w.a[1], x2: w.b[0], y2: w.b[1],
+        stroke: 'rgba(128,128,128,0.001)', strokeWidth: 190,
+        style: { cursor: 'pointer' },
+        onClick: (e) => this.select('wall', w.edge, e),
+        onContextMenu: (e) => this.openMenu('edge', w.edge, e)
+      })),
+      openings.map((o, i) => E('line', {
+        key: 'oh' + i, x1: o.x1, y1: o.y1, x2: o.x2, y2: o.y2,
+        stroke: 'rgba(128,128,128,0.001)', strokeWidth: 210,
+        style: { cursor: 'pointer' },
+        onClick: (e) => this.select('op', o.index, e),
+        onContextMenu: (e) => this.openMenu('op', o.index, e)
+      })),
+      r.poly.map((p, i) => E('g', { key: 'nd' + i },
+        E('circle', {
+          cx: p[0], cy: p[1], r: 180, fill: 'rgba(128,128,128,0.001)',
+          style: { cursor: 'grab' },
+          onPointerDown: (e) => this.startDrag(i, e),
+          onContextMenu: (e) => this.openMenu('node', i, e)
+        }),
+        E('circle', { cx: p[0], cy: p[1], r: 78, fill: 'var(--c-paper)', stroke: 'var(--color-accent)', strokeWidth: 30, pointerEvents: 'none' })
+      ))
+    );
+
+    /* ---- selection panel ---- */
+    const opsList = this.ops();
+    const selWall = r.walls.find((w) => w.edge === selWallEdge);
+    const selOp = selOpIndex >= 0 ? opsList[selOpIndex] : null;
+    const num = (e, lo, hi) => Math.max(lo, Math.min(hi, parseInt(e.target.value, 10) || lo));
+    let sel;
+    if (selOp) {
+      const wallOf = r.walls.find((w) => w.edge === selOp.wall);
+      sel = {
+        isWall: false, isOp: true,
+        title: (selOp.kind === 'door' ? (en ? 'Door ' : 'Дверь ') : (en ? 'Window ' : 'Окно ')) + selOp.id,
+        w: selOp.w, h: selOp.h, sill: selOp.sill, off: selOp.off,
+        wallName: wallOf ? wallOf.n : '—',
+        onW: (e) => this.setOp(selOpIndex, 'w', num(e, 200, 4000)),
+        onH: (e) => this.setOp(selOpIndex, 'h', num(e, 200, s.roomH - 50)),
+        onSill: (e) => this.setOp(selOpIndex, 'sill', num(e, 0, s.roomH - 300)),
+        onOff: (e) => this.setOp(selOpIndex, 'off', num(e, 0, 12000))
+      };
+    } else if (selWall) {
+      sel = {
+        isWall: true, isOp: false,
+        title: (en ? 'Wall ' : 'Стена ') + selWall.n,
+        len: selWall.len, opCount: selWall.op.length, tiles: 0,
+        onLen: (e) => this.setWallLength(selWall.edge, num(e, 300, 12000))
+      };
+    } else {
+      sel = { isWall: false, isOp: false, title: en ? 'nothing selected' : 'не выбран' };
+    }
+
+    /* ---- context menu ---- */
+    const menu = s.menu;
+    const menuItems = [];
+    if (menu) {
+      if (menu.kind === 'node') {
+        menuItems.push({ label: en ? 'Add wall from this node' : 'Добавить стену от узла', act: () => this.addWall(menu.i, true) });
+        menuItems.push({ label: en ? 'Delete node' : 'Удалить узел', act: () => this.removeNode(menu.i) });
+      } else if (menu.kind === 'edge') {
+        menuItems.push({ label: en ? 'Add window' : 'Добавить окно', act: () => this.addOp(menu.i, 'win') });
+        menuItems.push({ label: en ? 'Add door' : 'Добавить дверной проём', act: () => this.addOp(menu.i, 'door') });
+        menuItems.push({ label: en ? 'Add node here' : 'Добавить узел здесь', act: () => this.addNode(menu.i, menu.ux, menu.uy) });
+        menuItems.push({ label: en ? 'Add wall (step)' : 'Добавить стену (уступ)', act: () => this.addWall(menu.i, false) });
+        menuItems.push({ label: en ? 'Delete wall' : 'Удалить стену', act: () => this.removeNode((menu.i + 1) % r.poly.length) });
+      } else if (menu.kind === 'op') {
+        menuItems.push({ label: en ? 'Delete opening' : 'Удалить проём', act: () => this.removeOp(menu.i) });
+      } else {
+        menuItems.push({ label: en ? 'Reset outline' : 'Сбросить контур', act: () => this.resetOutline() });
+      }
+    }
+
+    /* ---- take-off ---- */
+    const ft = this.floorTiles();
+    const cutMap = new Map();
+    const add = (where, size) => {
+      const k = where + '|' + size;
+      cutMap.set(k, (cutMap.get(k) || 0) + 1);
+    };
+    let lossMm = 0, boughtMm = 0;
+    ft.forEach((t) => {
+      boughtMm += t.tileArea;
+      if (t.full) return;
+      lossMm += Math.max(0, t.tileArea - t.used);
+      const label = (t.L ? 'Г ' : '') + t.w + '×' + t.h + (t.diag ? ' ∠45°' : '');
+      add(en ? 'floor' : 'пол', label);
+    });
+
+    const fTiles = [], fNums = [];
+    let idx = 0;
+    ft.forEach((t) => {
+      idx++;
+      const fill = t.full ? 'var(--c-tile)' : 'var(--c-tile-cut)';
+      t.polys.forEach((p) => fTiles.push({ pts: p.map((q) => Math.round(q[0]) + ',' + Math.round(q[1])).join(' '), fill }));
+      if (this.props.showTileNumbers) {
+        const p0 = t.polys[0];
+        const cx = p0.reduce((a, q) => a + q[0], 0) / p0.length;
+        const cy = p0.reduce((a, q) => a + q[1], 0) / p0.length;
+        fNums.push({ x: cx, y: cy + 30, t: String(idx) });
+      }
+    });
+    const fDims = [
+      this.hDim(bb.x0, bb.x1, bb.y0 - 340, bb.w, false),
+      this.vDim(bb.y0, bb.y1, bb.x0 - 340, bb.h, false)
+    ];
+    const floorSvg = E('svg', {
+      viewBox: vb, preserveAspectRatio: 'xMidYMid meet',
+      style: { width: '100%', height: '340px', display: 'block', overflow: 'visible' }
+    },
+      fTiles.map((t, i) => E('polygon', { key: 't' + i, points: t.pts, fill: t.fill, stroke: 'var(--c-tile-line)', strokeWidth: 8 })),
+      E('polygon', { key: 'outline', points: pts, fill: 'none', stroke: 'var(--color-text)', strokeWidth: 22 }),
+      fNums.map((n, i) => E('text', { key: 'n' + i, x: n.x, y: n.y, fontSize: 88, fill: 'var(--c-muted)', textAnchor: 'middle' }, n.t)),
+      this.dimEls(fDims, 'fd')
+    );
+
+    let wallCount = 0, wallWhole = 0, wallArea = 0;
+    const wallPolys = [];
+    const wallSheets = r.walls.map((w) => {
+      const L = w.len;
+      const H = r.H;
+      const ops = w.op;
+      const tiles = this.wallTiles(L, H, ops);
+      wallCount += tiles.length;
+      tiles.forEach((t) => {
+        boughtMm += t.tileArea;
+        if (t.full) { wallWhole++; return; }
+        lossMm += Math.max(0, t.tileArea - t.used);
+        add(en ? 'wall ' + w.n : 'стена ' + w.n, t.w + '×' + t.h + (t.diag ? ' ∠45°' : ''));
+      });
+      if (w.edge === selWallEdge) sel.tiles = tiles.length;
+      wallPolys.push(tiles.flatMap((t) => t.polys.map((p) => ({ full: t.full, pts: p }))));
+      wallArea += (L * H - ops.reduce((a, o) => a + o.w * o.h, 0)) / 1e6;
+
+      const shapes = [];
+      tiles.forEach((t) => t.polys.forEach((p) => shapes.push({
+        pts: p.map((q) => Math.round(q[0]) + ',' + Math.round(H - q[1])).join(' '),
+        fill: t.full ? 'var(--c-tile)' : 'var(--c-tile-cut)'
+      })));
+      const holes = ops.map((o) => ({
+        x: o.off, y: H - o.sill - o.h, w: o.w, h: o.h,
+        tx: o.off + o.w / 2, ty: H - o.sill - o.h / 2 + 38,
+        label: o.id + ' ' + o.w + '×' + o.h
+      }));
+      const wDims = [this.hDim(0, L, H + 480, L, true), this.vDim(0, H, -420, H, false)];
+      ops.forEach((o, k) => {
+        const chainY = H + 140;
+        wDims.push(this.hDim(0, o.off, chainY, o.off, true));
+        wDims.push(this.hDim(o.off, o.off + o.w, chainY, o.w, true));
+        wDims.push(this.hDim(o.off + o.w, L, chainY, L - o.off - o.w, true));
+        const dx = L + 420 + k * 420;
+        wDims.push(this.vDim(H - o.sill, H, dx, o.sill, true));
+        wDims.push(this.vDim(H - o.sill - o.h, H - o.sill, dx, o.h, true));
+        wDims.push(this.vDim(0, H - o.sill - o.h, dx, H - o.sill - o.h, true));
+      });
+      const mx = 760, my = 520;
+      const rightPad = mx + ops.length * 460;
+      const svg = E('svg', {
+        viewBox: [-mx, -my * 0.6, L + mx + rightPad, H + my * 2.8].join(' '),
+        preserveAspectRatio: 'xMidYMid meet',
+        style: { width: '100%', height: '320px', display: 'block', overflow: 'visible' }
+      },
+        shapes.map((t, i) => E('polygon', { key: 'r' + i, points: t.pts, fill: t.fill, stroke: 'var(--c-tile-line)', strokeWidth: 8 })),
+        holes.map((h, i) => E('g', { key: 'h' + i },
+          E('rect', { x: h.x, y: h.y, width: h.w, height: h.h, fill: 'var(--c-paper)', stroke: 'var(--color-accent)', strokeWidth: 18 }),
+          E('text', { x: h.tx, y: h.ty, fontSize: 100, fill: 'var(--color-accent)', textAnchor: 'middle' }, h.label)
+        )),
+        E('rect', { key: 'frame', x: 0, y: 0, width: L, height: H, fill: 'none', stroke: 'var(--color-text)', strokeWidth: 22 }),
+        this.dimEls(wDims, 'wd' + w.n)
+      );
+
+      return {
+        title: (en ? 'Wall ' : 'Стена ') + w.n,
+        spec: s.wall.w + '×' + s.wall.h + '×' + s.wall.t + ' · ' + (en ? 'joint ' : 'шов ') + s.wall.j,
+        count: tiles.length + (en ? ' pcs' : ' шт'),
+        svg
+      };
+    });
+
+    this.last = {
+      room: r,
+      floorPolys: ft.flatMap((t) => t.polys.map((p) => ({ full: t.full, pts: p }))),
+      wallPolys
+    };
+
+    const floorWhole = ft.filter((t) => t.full).length;
+    const floorArea = r.regions.reduce((a, g) => a + ((g[2] - g[0]) * (g[3] - g[1])) / 1e6, 0);
+    const cuts = Array.from(cutMap.entries())
+      .map(([k, n]) => ({ where: k.split('|')[0], size: k.split('|')[1], n }))
+      .sort((a, b) => b.n - a.n);
+    const lossM2 = lossMm / 1e6, boughtM2 = boughtMm / 1e6;
+    const pct = boughtM2 > 0 ? (lossM2 / boughtM2) * 100 : 0;
+
+    return {
+      setRu: () => this.setLang('ru'),
+      setEn: () => this.setLang('en'),
+      langRuStyle: seg(s.lang === 'ru'),
+      langEnStyle: seg(s.lang === 'en') + 'border-right:0;',
+      toggleTheme: this.toggleTheme,
+      print: () => window.print(),
+
+      planSvg, floorSvg, wallSheets, cuts, sel,
+      menuOpen: !!menu,
+      menuItems,
+      menuStyle: menu
+        ? 'position:absolute;left:' + menu.x + 'px;top:' + menu.y + 'px;z-index:20;min-width:200px;background:var(--color-surface);border:1px solid var(--color-accent);border-radius:var(--radius-sm);padding:4px 0;box-shadow:var(--shadow-md);'
+        : 'display:none;',
+
+      roomH: s.roomH,
+      onRoomH: (e) => this.setState({ roomH: Math.max(1200, Math.min(4500, parseInt(e.target.value, 10) || 2600)) }),
+
+      floorW: s.floor.w, floorH: s.floor.h, floorT: s.floor.t, floorJ: s.floor.j, floorType: s.floor.type,
+      wallW: s.wall.w, wallH: s.wall.h, wallT: s.wall.t, wallJ: s.wall.j, wallType: s.wall.type,
+      onFloorW: (e) => this.set('floor', 'w', e), onFloorH: (e) => this.set('floor', 'h', e),
+      onFloorT: (e) => this.set('floor', 't', e), onFloorJ: (e) => this.set('floor', 'j', e),
+      onWallW: (e) => this.set('wall', 'w', e), onWallH: (e) => this.set('wall', 'h', e),
+      onWallT: (e) => this.set('wall', 't', e), onWallJ: (e) => this.set('wall', 'j', e),
+      onFloorType: (e) => this.setState((st) => ({ floor: Object.assign({}, st.floor, { type: e.target.value }) })),
+      onWallType: (e) => this.setState((st) => ({ wall: Object.assign({}, st.wall, { type: e.target.value }) })),
+
+      floorSheet: {
+        spec: s.floor.w + '×' + s.floor.h + '×' + s.floor.t + ' · ' + (en ? 'joint ' : 'шов ') + s.floor.j,
+        count: ft.length + (en ? ' pcs' : ' шт')
+      },
+      totals: {
+        floor: ft.length,
+        wall: wallCount,
+        floorArea: floorArea.toFixed(2) + ' м²',
+        wallArea: wallArea.toFixed(2) + ' м²',
+        wholeCut: (floorWhole + wallWhole) + ' / ' + (ft.length + wallCount - floorWhole - wallWhole),
+        bought: boughtM2.toFixed(2) + ' м²',
+        loss: lossM2.toFixed(2) + ' м² · ' + pct.toFixed(1) + '%'
+      }
+    };
+  }
+}
+
+</script>
+</body>
+</html>
