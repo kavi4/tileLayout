@@ -146,10 +146,16 @@
                   <span data-en="From floor, mm" style="font-size: 11px; color: var(--c-muted);">От пола, мм</span>
                   <input type="number" sc-camel-default-value="{{ sel.sill }}" key="{{ sel.sillKey }}" onBlur="{{ sel.onSill }}" onKeyDown="{{ commitOnEnter }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input>
                 </label>
-                <label style="display: flex; flex-direction: column; gap: 3px;">
-                  <span data-en="From wall start, mm" style="font-size: 11px; color: var(--c-muted);">От начала стены, мм</span>
-                  <input type="number" sc-camel-default-value="{{ sel.off }}" key="{{ sel.offKey }}" onBlur="{{ sel.onOff }}" onKeyDown="{{ commitOnEnter }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input>
-                </label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+                  <label style="display: flex; flex-direction: column; gap: 3px;">
+                    <span data-en="From start edge, mm" style="font-size: 11px; color: var(--c-muted);">От края стены, мм</span>
+                    <input type="number" sc-camel-default-value="{{ sel.off }}" key="{{ sel.offKey }}" onBlur="{{ sel.onOff }}" onKeyDown="{{ commitOnEnter }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input>
+                  </label>
+                  <label style="display: flex; flex-direction: column; gap: 3px;">
+                    <span data-en="From other edge, mm" style="font-size: 11px; color: var(--c-muted);">До другого края, мм</span>
+                    <input type="number" sc-camel-default-value="{{ sel.offEnd }}" key="{{ sel.offEndKey }}" onBlur="{{ sel.onOffEnd }}" onKeyDown="{{ commitOnEnter }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input>
+                  </label>
+                </div>
                 <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--c-muted);">
                   <span data-en="on wall">на стене</span>
                   <span style="color: var(--color-text);">{{ sel.wallName }}</span>
@@ -157,7 +163,7 @@
               </div>
             </sc-if>
 
-            <div data-en="Click a wall or an opening to edit it. Right-click for the context menu: add an opening, add a wall, delete the object. Drag the corner nodes to reshape the outline." style="font-size: 11px; color: var(--c-muted); border-top: 1px solid var(--color-divider); padding-top: var(--space-3);">Кликните стену или проём, чтобы задать параметры. Правая кнопка — контекстное меню: добавить проём, стену, удалить объект. Узлы углов тянутся мышью.</div>
+            <div data-en="Click a wall or an opening to edit it. Right-click for the context menu: add a node, a window or a door (one opening per wall), or delete the object. Drag a node to move it, a wall to slide it parallel to itself, or an opening to slide it along its wall." style="font-size: 11px; color: var(--c-muted); border-top: 1px solid var(--color-divider); padding-top: var(--space-3);">Кликните стену или проём, чтобы задать параметры. Правая кнопка — контекстное меню: добавить узел, окно или дверь (один проём на стену), удалить объект. Узел тянется сам по себе, стена — параллельно своему исходному положению, проём — вдоль своей стены.</div>
           </div>
         </div>
       </section>
@@ -250,14 +256,14 @@
           <div data-en="Off-cuts" style="font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--c-muted);">Остатки</div>
           <div style="display: grid; grid-template-columns: 1fr 84px 46px; gap: var(--space-2); margin-right: 10px; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--c-muted); padding-bottom: 3px; border-bottom: 1px solid var(--c-line);">
             <span data-en="Surface">Поверхность</span>
-            <span data-en="Size, mm" style="text-align: right;">Размер, мм</span>
+            <span data-en="Area, m²" style="text-align: right;">Площадь, м²</span>
             <span data-en="Qty" style="text-align: right;">Кол-во</span>
           </div>
           <div style="max-height: 214px; overflow: auto; scrollbar-gutter: stable; padding-right: 10px; display: flex; flex-direction: column;">
             <sc-for list="{{ cuts }}" as="c" hint-placeholder-count="8">
               <div style="display: grid; grid-template-columns: 1fr 84px 46px; gap: var(--space-2); font-size: 12px; padding: 4px 0; border-bottom: 1px solid var(--color-divider);">
                 <span style="color: var(--c-muted);">{{ c.where }}</span>
-                <span style="text-align: right; font-variant-numeric: tabular-nums;">{{ c.size }}</span>
+                <span style="text-align: right; font-variant-numeric: tabular-nums;">{{ c.area }}</span>
                 <span style="text-align: right; color: var(--color-accent); font-variant-numeric: tabular-nums;">{{ c.n }}</span>
               </div>
             </sc-for>
@@ -318,33 +324,43 @@ function polyArea(pts) {
   return Math.abs(a) / 2;
 }
 
-// Sutherland–Hodgman clip against an axis-aligned rectangle.
-function clipRect(pts, r) {
-  const edges = [
-    (p) => p[0] >= r[0], (p) => p[0] <= r[2],
-    (p) => p[1] >= r[1], (p) => p[1] <= r[3]
-  ];
-  const inter = [
-    (a, b) => [r[0], a[1] + ((b[1] - a[1]) * (r[0] - a[0])) / (b[0] - a[0])],
-    (a, b) => [r[2], a[1] + ((b[1] - a[1]) * (r[2] - a[0])) / (b[0] - a[0])],
-    (a, b) => [a[0] + ((b[0] - a[0]) * (r[1] - a[1])) / (b[1] - a[1]), r[1]],
-    (a, b) => [a[0] + ((b[0] - a[0]) * (r[3] - a[1])) / (b[1] - a[1]), r[3]]
-  ];
-  let cur = pts;
-  for (let e = 0; e < 4; e++) {
+// Intersection of infinite lines p1-p2 and p3-p4 (standard determinant form).
+function lineIntersect(p1, p2, p3, p4) {
+  const [x1, y1] = p1, [x2, y2] = p2, [x3, y3] = p3, [x4, y4] = p4;
+  const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+  if (Math.abs(denom) < 1e-9) return p2;
+  const a = x1 * y2 - y1 * x2, b = x3 * y4 - y3 * x4;
+  return [(a * (x3 - x4) - (x1 - x2) * b) / denom, (a * (y3 - y4) - (y1 - y2) * b) / denom];
+}
+
+// Sutherland–Hodgman clip of an arbitrary (possibly non-convex) subject
+// polygon against a convex clip polygon — orientation-agnostic, so it works
+// with both axis-aligned rectangles and the rotated tile used for a
+// diagonal layout, against a room outline that no longer has to be
+// rectilinear.
+function clipPoly(subject, clip) {
+  const signedArea2 = clip.reduce((s, p, i) => {
+    const q = clip[(i + 1) % clip.length];
+    return s + (p[0] * q[1] - q[0] * p[1]);
+  }, 0);
+  const sign = signedArea2 >= 0 ? 1 : -1;
+  let cur = subject;
+  for (let e = 0; e < clip.length && cur.length; e++) {
+    const a = clip[e], b = clip[(e + 1) % clip.length];
+    const dx = b[0] - a[0], dy = b[1] - a[1];
+    const inside = (p) => (dx * (p[1] - a[1]) - dy * (p[0] - a[0])) * sign >= 0;
     const next = [];
     for (let i = 0; i < cur.length; i++) {
-      const a = cur[(i + cur.length - 1) % cur.length], b = cur[i];
-      const ina = edges[e](a), inb = edges[e](b);
-      if (inb) {
-        if (!ina) next.push(inter[e](a, b));
-        next.push(b);
-      } else if (ina) {
-        next.push(inter[e](a, b));
+      const p1 = cur[(i + cur.length - 1) % cur.length], p2 = cur[i];
+      const in1 = inside(p1), in2 = inside(p2);
+      if (in2) {
+        if (!in1) next.push(lineIntersect(p1, p2, a, b));
+        next.push(p2);
+      } else if (in1) {
+        next.push(lineIntersect(p1, p2, a, b));
       }
     }
     cur = next;
-    if (!cur.length) return [];
   }
   return cur;
 }
@@ -359,11 +375,11 @@ class Component extends DCLogic {
     lang: 'ru',
     poly: null,
     ops: null,
-    roomH: 2600,
+    roomH: 2500,
     menu: null,
     sel: { kind: 'wall', i: 0 },
     floor: { w: 600, h: 600, t: 9, j: 2, type: 'grid' },
-    wall: { w: 300, h: 600, t: 8, j: 2, type: 'brick' }
+    wall: { w: 600, h: 600, t: 8, j: 2, type: 'brick' }
   };
 
   componentDidMount() {
@@ -509,20 +525,7 @@ class Component extends DCLogic {
       });
       walls.push({ n: LETTERS[i] || 'W' + (i + 1), edge: i, a, b, len, op });
     }
-    return { H, poly, walls, regions: this.regions(poly) };
-  }
-
-  regions(poly) {
-    const xs = Array.from(new Set(poly.map((p) => p[0]))).sort((a, b) => a - b);
-    const ys = Array.from(new Set(poly.map((p) => p[1]))).sort((a, b) => a - b);
-    const out = [];
-    for (let i = 0; i < xs.length - 1; i++) {
-      for (let j = 0; j < ys.length - 1; j++) {
-        const cx = (xs[i] + xs[i + 1]) / 2, cy = (ys[j] + ys[j + 1]) / 2;
-        if (this.inPoly([cx, cy], poly)) out.push([xs[i], ys[j], xs[i + 1], ys[j + 1]]);
-      }
-    }
-    return out.length ? out : [[0, 0, 1, 1]];
+    return { H, poly, walls };
   }
 
   bbox() {
@@ -531,15 +534,6 @@ class Component extends DCLogic {
     const x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs);
     const y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
     return { x0, y0, x1, y1, w: x1 - x0, h: y1 - y0 };
-  }
-
-  inPoly(p, poly) {
-    let c = false;
-    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-      const xi = poly[i][0], yi = poly[i][1], xj = poly[j][0], yj = poly[j][1];
-      if ((yi > p[1]) !== (yj > p[1]) && p[0] < ((xj - xi) * (p[1] - yi)) / (yj - yi) + xi) c = !c;
-    }
-    return c;
   }
 
   /* ---------- editing ---------- */
@@ -570,26 +564,139 @@ class Component extends DCLogic {
     window.addEventListener('pointerup', up);
   };
 
+  // The shortest a wall is allowed to be: enough to still hold its opening
+  // (if it has one) plus a 50mm margin past it. A wall with no opening has
+  // no such floor.
+  wallMinLen(edge) {
+    const o = this.ops().find((op) => op.wall === edge);
+    return o ? o.off + o.w + 50 : 0;
+  }
+
+  // A node moves on its own — the outline is free-form, so nothing forces
+  // its neighbors to follow, other than a floor on how far it can crowd
+  // into an opening on either of its two adjoining walls (a node can't end
+  // up closer than 50mm past that opening). We still snap lightly to the
+  // 25mm grid and to nearby vertices, purely as a placement convenience.
   moveVertex(i, x, y) {
     const poly = this.poly().map((p) => p.slice());
     const n = poly.length;
-    const prev = (i - 1 + n) % n, next = (i + 1) % n;
-    const snap = (v, others) => {
+    const others = poly.filter((_, k) => k !== i);
+    const snap = (v, vs) => {
       let best = Math.round(v / 25) * 25;
-      for (const o of others) if (Math.abs(o - v) < 90) best = o;
+      for (const o of vs) if (Math.abs(o - v) < 90) best = o;
       return best;
     };
-    const others = poly.filter((_, k) => k !== i);
-    const nx = snap(x, others.map((p) => p[0]));
-    const ny = snap(y, others.map((p) => p[1]));
-    const ox = poly[i][0], oy = poly[i][1];
-    poly[i] = [nx, ny];
-    if (Math.abs(poly[prev][0] - ox) < 1) poly[prev][0] = nx;
-    else if (Math.abs(poly[prev][1] - oy) < 1) poly[prev][1] = ny;
-    if (Math.abs(poly[next][0] - ox) < 1) poly[next][0] = nx;
-    else if (Math.abs(poly[next][1] - oy) < 1) poly[next][1] = ny;
+    let nx = snap(x, others.map((p) => p[0])), ny = snap(y, others.map((p) => p[1]));
+
+    const keepAway = (anchor, minLen) => {
+      if (minLen <= 0) return;
+      const dx = nx - anchor[0], dy = ny - anchor[1];
+      const d = Math.hypot(dx, dy);
+      if (d >= minLen || d < 1e-6) return;
+      const k = minLen / d;
+      nx = anchor[0] + dx * k;
+      ny = anchor[1] + dy * k;
+    };
+    keepAway(poly[(i - 1 + n) % n], this.wallMinLen((i - 1 + n) % n));
+    keepAway(poly[(i + 1) % n], this.wallMinLen(i));
+
+    poly[i] = [Math.round(nx), Math.round(ny)];
     this.setState({ poly, ops: this.ops() });
   }
+
+  // Dragging a selected wall slides it as a rigid body along its own
+  // normal, so it stays parallel to (and the same length as) where it
+  // started; the two adjoining walls simply pivot at the shared corners.
+  startWallDrag = (edge, e) => {
+    if (e.button === 2) return;
+    e.preventDefault();
+    e.stopPropagation();
+    this.setState({ menu: null, sel: { kind: 'wall', i: edge } });
+    const basePoly = this.poly().map((p) => p.slice());
+    const n = basePoly.length;
+    const bi = (edge + 1) % n;
+    const a0 = basePoly[edge], b0 = basePoly[bi];
+    const dx = b0[0] - a0[0], dy = b0[1] - a0[1];
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = dy / len, ny = -dx / len;
+    const start = this.toUser(e);
+    if (!start) return;
+    const prevAnchor = basePoly[(edge - 1 + n) % n];
+    const nextAnchor = basePoly[(bi + 1) % n];
+    const minPrev = this.wallMinLen((edge - 1 + n) % n), minNext = this.wallMinLen(bi);
+    // Sliding the wall shortens its two neighbors from the far end, so just
+    // as with a node drag, don't let it crowd into their openings. offset=0
+    // (the start) is always valid, so if a candidate offset isn't, binary
+    // search back toward the last valid one to find exactly where it stops
+    // — this keeps the wall gliding smoothly up to the limit even when a
+    // single pointer move jumps well past it.
+    const valid = (offset) => {
+      const na0 = a0[0] + nx * offset, na1 = a0[1] + ny * offset;
+      const nb0 = b0[0] + nx * offset, nb1 = b0[1] + ny * offset;
+      return Math.hypot(na0 - prevAnchor[0], na1 - prevAnchor[1]) >= minPrev &&
+        Math.hypot(nb0 - nextAnchor[0], nb1 - nextAnchor[1]) >= minNext;
+    };
+    let lastValid = 0;
+    const move = (ev) => {
+      const p = this.toUser(ev);
+      if (!p) return;
+      let offset = (p.x - start.x) * nx + (p.y - start.y) * ny;
+      if (!valid(offset)) {
+        let lo = lastValid, hi = offset;
+        for (let k = 0; k < 20; k++) {
+          const mid = (lo + hi) / 2;
+          if (valid(mid)) lo = mid; else hi = mid;
+        }
+        offset = lo;
+      }
+      lastValid = offset;
+      const poly = this.poly().map((q) => q.slice());
+      poly[edge] = [Math.round(a0[0] + nx * offset), Math.round(a0[1] + ny * offset)];
+      poly[bi] = [Math.round(b0[0] + nx * offset), Math.round(b0[1] + ny * offset)];
+      this.setState({ poly, ops: this.ops() });
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+
+  // Dragging an opening slides it along its own wall's direction only —
+  // the offset from the wall's start is what's stored, clamped to the same
+  // margin room() already enforces for rendering, so the drag never shows
+  // a position the stored value wouldn't actually produce.
+  startOpDrag = (index, e) => {
+    if (e.button === 2) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const op = this.ops()[index];
+    this.setState({ menu: null, sel: { kind: 'op', i: index } });
+    const poly = this.poly();
+    const n = poly.length;
+    const a = poly[op.wall], b = poly[(op.wall + 1) % n];
+    const dx = b[0] - a[0], dy = b[1] - a[1];
+    const len = Math.hypot(dx, dy) || 1;
+    const ux = dx / len, uy = dy / len;
+    const start = this.toUser(e);
+    if (!start) return;
+    const off0 = op.off;
+    const maxOff = Math.max(50, len - op.w - 50);
+    const move = (ev) => {
+      const p = this.toUser(ev);
+      if (!p) return;
+      const delta = (p.x - start.x) * ux + (p.y - start.y) * uy;
+      const off = Math.max(50, Math.min(maxOff, Math.round((off0 + delta) / 5) * 5));
+      this.setOp(index, 'off', off);
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
 
   setWallLength(edge, len) {
     const poly = this.poly().map((p) => p.slice());
@@ -597,7 +704,7 @@ class Component extends DCLogic {
     const a = poly[edge], b = poly[(edge + 1) % n];
     const cur = Math.hypot(b[0] - a[0], b[1] - a[1]);
     if (cur < 1) return;
-    const L = Math.max(300, Math.min(12000, Math.round(len / 25) * 25));
+    const L = Math.max(300, this.wallMinLen(edge), Math.min(12000, Math.round(len / 25) * 25));
     const ux = (b[0] - a[0]) / cur, uy = (b[1] - a[1]) / cur;
     const d = L - cur;
     const bi = (edge + 1) % n, ci = (edge + 2) % n;
@@ -638,84 +745,30 @@ class Component extends DCLogic {
     this.setState({ ops, poly: this.poly(), menu: null, sel: { kind: 'wall', i: 0 } });
   }
 
+  // The outline is free-form now, so a new node is just the closest point
+  // on the wall's own segment to where the menu was opened — works the
+  // same whether that wall is axis-aligned or at an angle.
   addNode(i, ux, uy) {
     const poly = this.poly().map((p) => p.slice());
     const a = poly[i], b = poly[(i + 1) % poly.length];
-    const horiz = Math.abs(a[1] - b[1]) < 1;
-    const pt = horiz
-      ? [Math.round(Math.max(Math.min(ux, Math.max(a[0], b[0])), Math.min(a[0], b[0])) / 25) * 25, a[1]]
-      : [a[0], Math.round(Math.max(Math.min(uy, Math.max(a[1], b[1])), Math.min(a[1], b[1])) / 25) * 25];
+    const dx = b[0] - a[0], dy = b[1] - a[1];
+    const len2 = dx * dx + dy * dy || 1;
+    let t = ((ux - a[0]) * dx + (uy - a[1]) * dy) / len2;
+    t = Math.max(0.05, Math.min(0.95, t));
+    const pt = [Math.round(a[0] + dx * t), Math.round(a[1] + dy * t)];
     poly.splice(i + 1, 0, pt);
     this.setState({ poly, ops: this.shiftOps(i + 1, 1), menu: null });
   }
 
-  addWall(i, fromNode) {
-    const poly = this.poly().map((p) => p.slice());
-    const n = poly.length;
-    const a = poly[i], b = poly[(i + 1) % n];
-    const L = Math.hypot(b[0] - a[0], b[1] - a[1]);
-    if (L < 700) return this.setState({ menu: null });
-    const ux = (b[0] - a[0]) / L, uy = (b[1] - a[1]) / L;
-    const nx = uy, ny = -ux;
-    const depth = 600;
-    const seg = Math.min(800, Math.round((L - 200) / 2 / 25) * 25);
-    const start = fromNode ? 100 : Math.round((L - seg) / 2 / 25) * 25;
-    const p1 = [Math.round(a[0] + ux * start), Math.round(a[1] + uy * start)];
-    const p2 = [Math.round(p1[0] + nx * depth), Math.round(p1[1] + ny * depth)];
-    const p3 = [Math.round(p2[0] + ux * seg), Math.round(p2[1] + uy * seg)];
-    const p4 = [Math.round(p3[0] - nx * depth), Math.round(p3[1] - ny * depth)];
-    poly.splice(i + 1, 0, p1, p2, p3, p4);
-    this.setState({ poly, ops: this.shiftOps(i + 1, 4), menu: null });
-  }
-
-  // A rectilinear outline needs every edge to stay purely horizontal or
-  // vertical. Removing a turn vertex can only be resolved by nudging one of
-  // its two neighbors onto the other's line — which neighbor (and whether
-  // it's even possible without also disturbing the next edge over) depends
-  // on the local shape, so we try both snaps and keep whichever still yields
-  // a fully orthogonal, non-degenerate polygon.
-  isOrthogonal(poly) {
-    if (poly.length < 4) return false;
-    return poly.every((p, k) => {
-      const q = poly[(k + 1) % poly.length];
-      const dx = Math.abs(p[0] - q[0]), dy = Math.abs(p[1] - q[1]);
-      return (dx < 1 || dy < 1) && (dx > 1 || dy > 1);
-    });
-  }
-
+  // Any closed shape needs at least 3 nodes; below that there's no room
+  // left to form. Since the outline no longer has to stay rectilinear,
+  // removing a node is just dropping it and connecting its neighbors
+  // directly — no realignment needed.
   removeNode(i) {
-    const basePoly = this.poly();
-    if (basePoly.length <= 4) return this.setState({ menu: null });
-    const n = basePoly.length;
-
-    const snap = (moveNext) => {
-      const poly = basePoly.map((p) => p.slice());
-      const prev = poly[(i - 1 + n) % n];
-      const removed = poly[i];
-      const next = poly[(i + 1) % n];
-      if (moveNext) {
-        if (Math.abs(prev[0] - removed[0]) < 1) next[0] = prev[0];
-        else next[1] = prev[1];
-      } else {
-        if (Math.abs(next[0] - removed[0]) < 1) prev[0] = next[0];
-        else prev[1] = next[1];
-      }
-      poly.splice(i, 1);
-      return poly;
-    };
-
-    let poly = snap(true);
-    if (!this.isOrthogonal(poly)) {
-      const alt = snap(false);
-      if (this.isOrthogonal(alt)) poly = alt;
-      // Neither snap keeps the outline rectilinear (this vertex is a real
-      // structural corner, not a straight-through node) — refuse rather
-      // than leave a diagonal wall behind.
-      else return this.setState({ menu: null });
-    }
-
+    const poly = this.poly();
+    if (poly.length <= 3) return this.setState({ menu: null });
     this.setState({
-      poly,
+      poly: poly.filter((_, k) => k !== i),
       ops: this.shiftOps(i + 1, -1).filter((o) => o.wall >= 0),
       menu: null, sel: { kind: 'wall', i: 0 }
     });
@@ -781,9 +834,13 @@ class Component extends DCLogic {
     return p;
   }
 
+  // Each candidate tile rectangle (axis-aligned, or rotated for a diagonal
+  // layout) is clipped directly against the room outline — which no longer
+  // has to be rectilinear — so the reported piece is always the exact
+  // shape that lands on the floor, not an axis-aligned approximation.
   floorTiles() {
     const f = this.state.floor;
-    const r = this.room();
+    const poly = this.poly();
     const bb = this.bbox();
     const px = f.w + f.j, py = f.h + f.j;
     const tileArea = f.w * f.h;
@@ -799,24 +856,11 @@ class Component extends DCLogic {
           const u = -R + j * px, v = -R + i * py;
           const cs = [[u, v], [u + f.w, v], [u + f.w, v + f.h], [u, v + f.h]]
             .map((q) => [cx + q[0] * cos - q[1] * sin, cy + q[0] * sin + q[1] * cos]);
-          const polys = [];
-          let used = 0;
-          r.regions.forEach((reg) => {
-            const c = clipRect(cs, reg);
-            if (c.length > 2) {
-              const a = polyArea(c);
-              if (a > 500) { polys.push(c); used += a; }
-            }
-          });
-          if (!polys.length) continue;
-          const xs = polys.flat().map((q) => q[0]), ys = polys.flat().map((q) => q[1]);
-          out.push({
-            polys, used, tileArea, diag: true,
-            full: used >= tileArea - 1000,
-            w: Math.round((Math.max.apply(null, xs) - Math.min.apply(null, xs)) / 5) * 5,
-            h: Math.round((Math.max.apply(null, ys) - Math.min.apply(null, ys)) / 5) * 5,
-            L: polys.length > 1
-          });
+          const c = clipPoly(poly, cs);
+          if (c.length < 3) continue;
+          const used = polyArea(c);
+          if (used < 500) continue;
+          out.push({ polys: [c], used, tileArea, diag: true, full: used >= tileArea - 1000 });
         }
       }
       return out;
@@ -828,24 +872,11 @@ class Component extends DCLogic {
       const off = f.type === 'brick' ? (i % 2) * (px / 2) : 0;
       for (let j = -1; j < cols; j++) {
         const x0 = bb.x0 + off + j * px, y0 = bb.y0 + i * py;
-        let pieces = [];
-        r.regions.forEach((reg) => {
-          const ax = Math.max(x0, reg[0]), ay = Math.max(y0, reg[1]);
-          const bx = Math.min(x0 + f.w, reg[2]), by = Math.min(y0 + f.h, reg[3]);
-          if (bx - ax > 1 && by - ay > 1) pieces.push({ x: ax, y: ay, w: bx - ax, h: by - ay });
-        });
-        if (!pieces.length) continue;
-        pieces = this.mergeRects(pieces);
-        const used = pieces.reduce((a, p) => a + p.w * p.h, 0);
-        out.push({
-          polys: pieces.map((p) => rectPts(p.x, p.y, p.w, p.h)),
-          used, tileArea, diag: false,
-          full: pieces.length === 1 && pieces[0].w >= f.w - 1 && pieces[0].h >= f.h - 1,
-          w: Math.round(Math.max.apply(null, pieces.map((p) => p.w))),
-          h: Math.round(Math.max.apply(null, pieces.map((p) => p.h))),
-          L: pieces.length > 1,
-          center: [pieces[0].x + pieces[0].w / 2, pieces[0].y + pieces[0].h / 2]
-        });
+        const c = clipPoly(poly, rectPts(x0, y0, f.w, f.h));
+        if (c.length < 3) continue;
+        const used = polyArea(c);
+        if (used < 500) continue;
+        out.push({ polys: [c], used, tileArea, diag: false, full: used >= tileArea - 1000 });
       }
     }
     return out;
@@ -881,25 +912,23 @@ class Component extends DCLogic {
       const R = Math.hypot(len, H) / 2 + Math.max(px, py) * 1.5;
       const cx = len / 2, cy = H / 2;
       const cols = Math.ceil((2 * R) / px) + 2, rows = Math.ceil((2 * R) / py) + 2;
-      const holes = ops.map((o) => [o.off, o.sill, o.off + o.w, o.sill + o.h]);
+      const holes = ops.map((o) => rectPts(o.off, o.sill, o.w, o.h));
+      const bound = rectPts(0, 0, len, H);
       for (let i = 0; i < rows; i++) {
         for (let j = 0; j < cols; j++) {
           const u = -R + j * px, v = -R + i * py;
           const cs = [[u, v], [u + w.w, v], [u + w.w, v + w.h], [u, v + w.h]]
             .map((q) => [cx + q[0] * cos - q[1] * sin, cy + q[0] * sin + q[1] * cos]);
-          const c = clipRect(cs, [0, 0, len, H]);
+          const c = clipPoly(cs, bound);
           if (c.length < 3) continue;
           let used = polyArea(c);
           if (used < 500) continue;
           holes.forEach((hr) => {
-            const h = clipRect(c, hr);
+            const h = clipPoly(c, hr);
             if (h.length > 2) used -= polyArea(h);
           });
           if (used < 500) continue;
-          out.push({
-            polys: [c], used, tileArea, full: used >= tileArea - 1000,
-            w: w.w, h: w.h, diag: true
-          });
+          out.push({ polys: [c], used, tileArea, full: used >= tileArea - 1000, diag: true });
         }
       }
       return out;
@@ -920,10 +949,8 @@ class Component extends DCLogic {
         const used = merged.reduce((a, p) => a + p.w * p.h, 0);
         out.push({
           polys: merged.map((p) => rectPts(p.x, p.y, p.w, p.h)),
-          rects: merged, used, tileArea, diag: false,
-          full: merged.length === 1 && ww >= w.w - 1 && hh >= w.h - 1,
-          w: Math.round(Math.max.apply(null, merged.map((p) => p.w))),
-          h: Math.round(Math.max.apply(null, merged.map((p) => p.h)))
+          used, tileArea, diag: false,
+          full: merged.length === 1 && ww >= w.w - 1 && hh >= w.h - 1
         });
       }
     }
@@ -1027,15 +1054,17 @@ class Component extends DCLogic {
       r.walls.map((w) => E('line', {
         key: 'eh' + w.edge, x1: w.a[0], y1: w.a[1], x2: w.b[0], y2: w.b[1],
         stroke: 'rgba(128,128,128,0.001)', strokeWidth: 190,
-        style: { cursor: 'pointer' },
+        style: { cursor: 'move' },
         onClick: (e) => this.select('wall', w.edge, e),
+        onPointerDown: (e) => this.startWallDrag(w.edge, e),
         onContextMenu: (e) => this.openMenu('edge', w.edge, e)
       })),
       openings.map((o, i) => E('line', {
         key: 'oh' + i, x1: o.x1, y1: o.y1, x2: o.x2, y2: o.y2,
         stroke: 'rgba(128,128,128,0.001)', strokeWidth: 210,
-        style: { cursor: 'pointer' },
+        style: { cursor: 'move' },
         onClick: (e) => this.select('op', o.index, e),
+        onPointerDown: (e) => this.startOpDrag(o.index, e),
         onContextMenu: (e) => this.openMenu('op', o.index, e)
       })),
       r.poly.map((p, i) => E('g', { key: 'nd' + i },
@@ -1057,15 +1086,21 @@ class Component extends DCLogic {
     let sel;
     if (selOp) {
       const wallOf = r.walls.find((w) => w.edge === selOp.wall);
+      const wallLen = wallOf ? wallOf.len : selOp.off + selOp.w;
+      const offEnd = Math.max(0, wallLen - selOp.off - selOp.w);
       sel = {
         isWall: false, isOp: true,
         title: (selOp.kind === 'door' ? (en ? 'Door ' : 'Дверь ') : (en ? 'Window ' : 'Окно ')) + selOp.id,
-        w: selOp.w, h: selOp.h, sill: selOp.sill, off: selOp.off,
+        w: selOp.w, h: selOp.h, sill: selOp.sill, off: selOp.off, offEnd,
         wallName: wallOf ? wallOf.n : '—',
         onW: (e) => this.setOp(selOpIndex, 'w', num(e, 200, 4000)),
         onH: (e) => this.setOp(selOpIndex, 'h', num(e, 200, s.roomH - 50)),
         onSill: (e) => this.setOp(selOpIndex, 'sill', num(e, 0, s.roomH - 300)),
-        onOff: (e) => this.setOp(selOpIndex, 'off', num(e, 0, 12000)),
+        onOff: (e) => this.setOp(selOpIndex, 'off', num(e, 0, wallLen)),
+        // The two distances are two views of the same offset — editing
+        // "to the far end" just solves off = wallLen - offEnd - width and
+        // writes that back, so the other field updates on next render.
+        onOffEnd: (e) => this.setOp(selOpIndex, 'off', Math.max(0, wallLen - num(e, 0, wallLen) - selOp.w)),
         // Keying each field to `<opIndex>-<committedValue>` remounts the
         // (uncontrolled) input only when the committed value actually
         // changes — not on every keystroke — so typing isn't fought by
@@ -1073,7 +1108,8 @@ class Component extends DCLogic {
         wKey: 'w' + selOpIndex + '-' + selOp.w,
         hKey: 'h' + selOpIndex + '-' + selOp.h,
         sillKey: 'sill' + selOpIndex + '-' + selOp.sill,
-        offKey: 'off' + selOpIndex + '-' + selOp.off
+        offKey: 'off' + selOpIndex + '-' + selOp.off,
+        offEndKey: 'offEnd' + selOpIndex + '-' + offEnd
       };
     } else if (selWall) {
       sel = {
@@ -1092,14 +1128,16 @@ class Component extends DCLogic {
     const menuItems = [];
     if (menu) {
       if (menu.kind === 'node') {
-        menuItems.push({ label: en ? 'Add wall from this node' : 'Добавить стену от узла', act: () => this.addWall(menu.i, true) });
         menuItems.push({ label: en ? 'Delete node' : 'Удалить узел', act: () => this.removeNode(menu.i) });
       } else if (menu.kind === 'edge') {
-        menuItems.push({ label: en ? 'Add window' : 'Добавить окно', act: () => this.addOp(menu.i, 'win') });
-        menuItems.push({ label: en ? 'Add door' : 'Добавить дверной проём', act: () => this.addOp(menu.i, 'door') });
+        // A wall carries at most one opening, so offer to add one only
+        // while it's still empty.
+        const wallForMenu = r.walls.find((w) => w.edge === menu.i);
+        if (!wallForMenu || wallForMenu.op.length === 0) {
+          menuItems.push({ label: en ? 'Add window' : 'Добавить окно', act: () => this.addOp(menu.i, 'win') });
+          menuItems.push({ label: en ? 'Add door' : 'Добавить дверной проём', act: () => this.addOp(menu.i, 'door') });
+        }
         menuItems.push({ label: en ? 'Add node here' : 'Добавить узел здесь', act: () => this.addNode(menu.i, menu.ux, menu.uy) });
-        menuItems.push({ label: en ? 'Add wall (step)' : 'Добавить стену (уступ)', act: () => this.addWall(menu.i, false) });
-        menuItems.push({ label: en ? 'Delete wall' : 'Удалить стену', act: () => this.removeNode((menu.i + 1) % r.poly.length) });
       } else if (menu.kind === 'op') {
         menuItems.push({ label: en ? 'Delete opening' : 'Удалить проём', act: () => this.removeOp(menu.i) });
       } else {
@@ -1109,18 +1147,22 @@ class Component extends DCLogic {
 
     /* ---- take-off ---- */
     const ft = this.floorTiles();
+    // Off-cuts can now be irregular polygons (not just rectangles), so
+    // they're grouped and reported by area rather than a W×H size —
+    // grouping key rounds to the nearest 0.001 m² to merge near-identical
+    // pieces despite float noise.
     const cutMap = new Map();
-    const add = (where, size) => {
-      const k = where + '|' + size;
-      cutMap.set(k, (cutMap.get(k) || 0) + 1);
+    const add = (where, areaMm) => {
+      const k = where + '|' + Math.round(areaMm / 1000);
+      const cur = cutMap.get(k);
+      if (cur) cur.n++; else cutMap.set(k, { where, areaMm, n: 1 });
     };
     let lossMm = 0, boughtMm = 0;
     ft.forEach((t) => {
       boughtMm += t.tileArea;
       if (t.full) return;
       lossMm += Math.max(0, t.tileArea - t.used);
-      const label = (t.L ? 'Г ' : '') + t.w + '×' + t.h + (t.diag ? ' ∠45°' : '');
-      add(en ? 'floor' : 'пол', label);
+      add(en ? 'floor' : 'пол', t.used);
     });
 
     const fTiles = [], fNums = [];
@@ -1162,7 +1204,7 @@ class Component extends DCLogic {
         boughtMm += t.tileArea;
         if (t.full) { wallWhole++; return; }
         lossMm += Math.max(0, t.tileArea - t.used);
-        add(en ? 'wall ' + w.n : 'стена ' + w.n, t.w + '×' + t.h + (t.diag ? ' ∠45°' : ''));
+        add(en ? 'wall ' + w.n : 'стена ' + w.n, t.used);
       });
       if (w.edge === selWallEdge) sel.tiles = tiles.length;
       wallPolys.push(tiles.flatMap((t) => t.polys.map((p) => ({ full: t.full, pts: p }))));
@@ -1220,9 +1262,9 @@ class Component extends DCLogic {
     };
 
     const floorWhole = ft.filter((t) => t.full).length;
-    const floorArea = r.regions.reduce((a, g) => a + ((g[2] - g[0]) * (g[3] - g[1])) / 1e6, 0);
-    const cuts = Array.from(cutMap.entries())
-      .map(([k, n]) => ({ where: k.split('|')[0], size: k.split('|')[1], n }))
+    const floorArea = polyArea(r.poly) / 1e6;
+    const cuts = Array.from(cutMap.values())
+      .map((c) => ({ where: c.where, area: (c.areaMm / 1e6).toFixed(3) + ' м²', n: c.n }))
       .sort((a, b) => b.n - a.n);
     const lossM2 = lossMm / 1e6, boughtM2 = boughtMm / 1e6;
     const pct = boughtM2 > 0 ? (lossM2 / boughtM2) * 100 : 0;
@@ -1244,7 +1286,7 @@ class Component extends DCLogic {
         : 'display:none;',
 
       roomH: s.roomH, roomHKey: 'roomH-' + s.roomH,
-      onRoomH: (e) => this.setState({ roomH: Math.max(1200, Math.min(4500, parseInt(e.target.value, 10) || 2600)) }),
+      onRoomH: (e) => this.setState({ roomH: Math.max(1200, Math.min(4500, parseInt(e.target.value, 10) || 2500)) }),
 
       floorW: s.floor.w, floorH: s.floor.h, floorT: s.floor.t, floorJ: s.floor.j, floorType: s.floor.type,
       wallW: s.wall.w, wallH: s.wall.h, wallT: s.wall.t, wallJ: s.wall.j, wallType: s.wall.type,
