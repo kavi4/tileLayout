@@ -51,7 +51,7 @@
   a:hover { color: var(--color-accent-400); }
   input:focus-visible, button:focus-visible, select:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
   ::selection { background: color-mix(in srgb, var(--color-accent) 35%, transparent); }
-  @page { size: A4 landscape; margin: 10mm; }
+  @page { size: A4 portrait; margin: 6mm; }
   @media print {
     :root, :root[data-theme="dark"] {
       --color-bg: #ffffff; --color-surface: #ffffff; --color-text: #1a1a1f;
@@ -60,13 +60,25 @@
       --color-accent: #5d5294; --color-divider: #cfd3e5;
     }
     [data-noprint] { display: none !important; }
-    [data-sheet] { break-inside: avoid; page-break-inside: avoid; }
+    .app-shell { min-height: 0 !important; }
+    .app-inner { max-width: none !important; padding: 0 !important; gap: 0 !important; }
+    .print-section { padding: 0 !important; border: none !important; background: transparent !important; gap: 4mm !important; }
+    .sheets-grid { display: block !important; }
+    [data-sheet] {
+      break-inside: avoid; page-break-inside: avoid;
+      padding: 3mm !important; border-radius: 0 !important;
+      margin-bottom: 6mm;
+    }
+    /* Full page width, height set by the drawing's own aspect ratio (not
+       forced) — a compact wall sheet then only claims the room it needs,
+       instead of every sheet reserving a full page regardless of shape. */
+    [data-sheet] svg { width: 100% !important; height: auto !important; }
   }
 </style>
 </helmet>
 
-<div style="min-height: 100vh; background: var(--color-bg); color: var(--color-text); font-family: var(--font-body); font-size: 13px; line-height: 1.45; -webkit-font-smoothing: antialiased;">
-  <div style="max-width: 1560px; margin: 0 auto; padding: var(--space-8) var(--space-8) 64px; display: flex; flex-direction: column; gap: var(--space-8);">
+<div class="app-shell" style="min-height: 100vh; background: var(--color-bg); color: var(--color-text); font-family: var(--font-body); font-size: 13px; line-height: 1.45; -webkit-font-smoothing: antialiased;">
+  <div class="app-inner" style="max-width: 1560px; margin: 0 auto; padding: var(--space-8) var(--space-8) 64px; display: flex; flex-direction: column; gap: var(--space-8);">
 
     <div data-noprint="1" style="display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-6); padding-bottom: var(--space-4); border-bottom: 1px solid var(--color-divider);">
       <div style="display: flex; flex-direction: column; gap: 2px;">
@@ -201,9 +213,9 @@
           <label style="display: flex; flex-direction: column; gap: 3px;">
             <span data-en="Layout" style="font-size: 11px; color: var(--c-muted);">Тип раскладки</span>
             <select value="{{ floorType }}" onChange="{{ onFloorType }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;">
-              <option value="grid" data-en="Straight (grid)">Правильная (шов в шов)</option>
-              <option value="brick" data-en="Running bond">Деревенская (вразбежку)</option>
-              <option value="diag" data-en="Diagonal 45°">Диагональная 45°</option>
+              <option value="classic" data-en="Classic">Классическая</option>
+              <option value="basic" data-en="Basic">Убогая</option>
+              <option value="village" data-en="Rustic">Деревенская</option>
             </select>
           </label>
         </div>
@@ -219,9 +231,9 @@
           <label style="display: flex; flex-direction: column; gap: 3px;">
             <span data-en="Layout" style="font-size: 11px; color: var(--c-muted);">Тип раскладки</span>
             <select value="{{ wallType }}" onChange="{{ onWallType }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;">
-              <option value="grid" data-en="Straight (grid)">Правильная (шов в шов)</option>
-              <option value="brick" data-en="Running bond">Деревенская (вразбежку)</option>
-              <option value="diag" data-en="Diagonal 45°">Диагональная 45°</option>
+              <option value="classic" data-en="Classic">Классическая</option>
+              <option value="basic" data-en="Basic">Убогая</option>
+              <option value="village" data-en="Rustic">Деревенская</option>
             </select>
           </label>
         </div>
@@ -246,7 +258,11 @@
               <span style="color: var(--color-text);">{{ totals.wholeCut }}</span>
             </div>
             <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--c-muted);">
-              <span data-en="tile area bought">закуплено плитки</span>
+              <span data-en="of which reused off-cuts">из них переиспользовано</span>
+              <span style="color: var(--color-text);">{{ totals.reused }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--c-muted);">
+              <span data-en="tiles to buy">закуплено плитки</span>
               <span style="color: var(--color-text);">{{ totals.bought }}</span>
             </div>
           </div>
@@ -276,18 +292,18 @@
       </div>
     </section>
 
-    <section style="background: var(--color-surface); border: 1px solid var(--c-line); border-radius: var(--radius-md); padding: var(--space-6); display: flex; flex-direction: column; gap: var(--space-6);">
+    <section class="print-section" style="background: var(--color-surface); border: 1px solid var(--c-line); border-radius: var(--radius-md); padding: var(--space-6); display: flex; flex-direction: column; gap: var(--space-6);">
       <div style="display: flex; align-items: center; gap: var(--space-3);">
         <div style="width: 20px; height: 20px; border: 1px solid var(--color-accent); border-radius: 3px; color: var(--color-accent); display: grid; place-items: center; font-size: 11px;">4</div>
         <div data-en="Layout drawings" style="font-family: var(--font-heading); font-weight: 500; font-size: 15px;">Раскладка · чертёж</div>
-        <div data-en="A4 landscape · dimensions in mm" style="font-size: 11px; color: var(--c-muted);">A4 альбомная · размеры в мм</div>
+        <div data-en="A4 portrait · one sheet per page · dimensions in mm" style="font-size: 11px; color: var(--c-muted);">A4 книжная · один чертёж на лист · размеры в мм</div>
         <button type="button" data-noprint="1" onClick="{{ print }}" style="margin-left: auto; display: inline-flex; align-items: center; gap: var(--space-2); background: transparent; color: var(--color-accent); border: 1px solid var(--color-accent); border-radius: var(--radius-sm); padding: 7px 14px; font: inherit; font-size: 12px; cursor: pointer;" style-hover="background: color-mix(in srgb, var(--color-accent) 14%, transparent);">
           <i class="ph ph-printer" style="font-size: 15px;"></i>
           <span data-en="Print">Печать</span>
         </button>
       </div>
 
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: var(--space-8);">
+      <div class="sheets-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: var(--space-8);">
         <div data-sheet="1" style="display: flex; flex-direction: column; gap: var(--space-3); background: var(--c-paper); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: var(--space-6);">
           <div style="display: flex; align-items: baseline; gap: var(--space-3); border-bottom: 1px solid var(--color-divider); padding-bottom: var(--space-2);">
             <span data-en="Floor" style="font-family: var(--font-heading); font-size: 13px;">Пол</span>
@@ -313,7 +329,7 @@
 </div>
 
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;defaultTheme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;'light'|'dark'&quot;},&quot;roomPreset&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;l&quot;,&quot;rect&quot;],&quot;default&quot;:&quot;l&quot;,&quot;tsType&quot;:&quot;'l'|'rect'&quot;},&quot;showTileNumbers&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;defaultTheme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;'light'|'dark'&quot;},&quot;roomPreset&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;l&quot;,&quot;rect&quot;],&quot;default&quot;:&quot;l&quot;,&quot;tsType&quot;:&quot;'l'|'rect'&quot;}}">
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 function polyArea(pts) {
@@ -378,8 +394,9 @@ class Component extends DCLogic {
     roomH: 2500,
     menu: null,
     sel: { kind: 'wall', i: 0 },
-    floor: { w: 600, h: 600, t: 9, j: 2, type: 'grid' },
-    wall: { w: 600, h: 600, t: 8, j: 2, type: 'brick' }
+    hover: null,
+    floor: { w: 600, h: 600, t: 9, j: 2, type: 'classic' },
+    wall: { w: 600, h: 600, t: 8, j: 2, type: 'classic' }
   };
 
   componentDidMount() {
@@ -476,6 +493,12 @@ class Component extends DCLogic {
   commitOnEnter = (e) => {
     if (e.key === 'Enter') e.target.blur();
   };
+
+  // Hovering a reused cut piece highlights it and the other piece sawn
+  // from the same tile. Scoped by surface (`floor`, or a wall — all walls
+  // share one id sequence) since a floor id and a wall id can coincide.
+  setHover = (surface, id) => this.setState({ hover: { surface, id } });
+  clearHover = () => this.setState({ hover: null });
 
   set(group, key, e) {
     const v = Math.max(1, Math.min(3000, parseInt(e.target.value, 10) || 1));
@@ -834,54 +857,123 @@ class Component extends DCLogic {
     return p;
   }
 
-  // Each candidate tile rectangle (axis-aligned, or rotated for a diagonal
-  // layout) is clipped directly against the room outline — which no longer
-  // has to be rectilinear — so the reported piece is always the exact
-  // shape that lands on the floor, not an axis-aligned approximation.
+  // Three axis strategies, chosen per surface. Each returns the sequence of
+  // segment sizes along one axis (widths for columns, heights for rows).
+  // - classic: whole tiles centered, one full-tile's worth of slack always
+  //   reserved so the two edge cuts are never a sliver (they land roughly
+  //   half a tile to a full tile each).
+  // - village: same centering, but no slack is reserved — if the surface
+  //   divides evenly there's simply no cut at all.
+  // - basic: no centering — whole tiles packed from the start, a single
+  //   cut absorbs whatever's left at the far end.
+  axisSegments(type, size, t, joint) {
+    const pitch = t + joint;
+    if (type === 'basic') {
+      const whole = Math.max(0, Math.floor(size / pitch));
+      const cut = Math.max(0, size - whole * t - whole * joint);
+      const segs = [];
+      for (let k = 0; k < whole; k++) segs.push(t);
+      segs.push(cut);
+      return segs;
+    }
+    const whole = type === 'village'
+      ? Math.max(0, Math.floor(size / pitch))
+      : Math.max(0, Math.floor(size / pitch) - 1);
+    if (whole <= 0) return [size];
+    const each = (size - whole * t - (whole + 1) * joint) / 2;
+    const segs = [each];
+    for (let k = 0; k < whole; k++) segs.push(t);
+    segs.push(each);
+    return segs;
+  }
+
+  // Lays out one surface's grid, shared by floor and walls. Every cut piece
+  // first tries to be sawn from a leftover an earlier cut produced — one
+  // level only, a leftover is never itself re-cut for something else —
+  // before a fresh tile is charged. `state` (`{pool, nextId}`) is threaded
+  // in and mutated in place, so callers that lay out several surfaces off
+  // the same stock of tiles (every wall in the room) can share one pool and
+  // one numbering sequence across all of them; pass a fresh `{pool:[],
+  // nextId:1}` for a surface with its own tile stock (the floor). Whatever
+  // stays unclaimed in the pool at the end is genuine scrap. `clip(x, y, w,
+  // h)` turns one full-size grid cell into the real installed piece(s):
+  // clipped to the room outline for a floor, hole-punched for a wall — a
+  // piece only counts as a whole, uncut tile if that clip didn't shave
+  // anything off it either.
+  layoutTiles(type, boundW, boundH, tile, joint, clip, state, tag) {
+    const withPos = (sizes) => {
+      let pos = 0;
+      return sizes.map((size) => {
+        const start = pos;
+        pos += size + joint;
+        return { size, start };
+      });
+    };
+    const cols = withPos(this.axisSegments(type, boundW, tile.w, joint));
+    const rows = withPos(this.axisSegments(type, boundH, tile.h, joint));
+    const tileArea = tile.w * tile.h;
+
+    const pool = state.pool;
+    const take = (w, h) => {
+      let best = -1, bestArea = Infinity;
+      pool.forEach((it, i) => {
+        if (it.w >= w - 0.5 && it.h >= h - 0.5 && it.w * it.h < bestArea) { best = i; bestArea = it.w * it.h; }
+      });
+      return best < 0 ? null : pool.splice(best, 1)[0];
+    };
+    const give = (w, h, id) => { if (w > 1 && h > 1) pool.push({ w, h, id, tag }); };
+
+    const tiles = [];
+    rows.forEach((row) => {
+      cols.forEach((col) => {
+        const cutX = Math.abs(col.size - tile.w) > 1, cutY = Math.abs(row.size - tile.h) > 1;
+        const polys = clip(col.start, row.start, col.size, row.size);
+        const used = polys.reduce((a, p) => a + polyArea(p), 0);
+        if (used < 500) return;
+
+        let id = null, reused = false;
+        if (cutX || cutY) {
+          const got = take(col.size, row.size);
+          if (got) {
+            id = got.id;
+            reused = true;
+          } else {
+            id = state.nextId++;
+            const optA = { w: tile.w - col.size, h: tile.h };
+            const optB = { w: tile.w, h: tile.h - row.size };
+            const leftover = optA.w * optA.h >= optB.w * optB.h ? optA : optB;
+            give(leftover.w, leftover.h, id);
+          }
+        }
+        const full = !cutX && !cutY && used >= tileArea - 1000;
+        tiles.push({ polys, used, tileArea, full, id, reused });
+      });
+    });
+    return { tiles, leftovers: pool };
+  }
+
   floorTiles() {
     const f = this.state.floor;
     const poly = this.poly();
     const bb = this.bbox();
-    const px = f.w + f.j, py = f.h + f.j;
-    const tileArea = f.w * f.h;
-    const out = [];
-
-    if (f.type === 'diag') {
-      const cx = (bb.x0 + bb.x1) / 2, cy = (bb.y0 + bb.y1) / 2;
-      const R = Math.hypot(bb.w, bb.h) / 2 + Math.max(px, py) * 1.5;
-      const cos = Math.SQRT1_2, sin = Math.SQRT1_2;
-      const cols = Math.ceil((2 * R) / px) + 2, rows = Math.ceil((2 * R) / py) + 2;
-      for (let i = 0; i < rows; i++) {
-        for (let j = 0; j < cols; j++) {
-          const u = -R + j * px, v = -R + i * py;
-          const cs = [[u, v], [u + f.w, v], [u + f.w, v + f.h], [u, v + f.h]]
-            .map((q) => [cx + q[0] * cos - q[1] * sin, cy + q[0] * sin + q[1] * cos]);
-          const c = clipPoly(poly, cs);
-          if (c.length < 3) continue;
-          const used = polyArea(c);
-          if (used < 500) continue;
-          out.push({ polys: [c], used, tileArea, diag: true, full: used >= tileArea - 1000 });
-        }
-      }
-      return out;
-    }
-
-    const rows = Math.ceil((bb.h + f.j) / py) + 1;
-    const cols = Math.ceil((bb.w + f.j) / px) + 2;
-    for (let i = 0; i < rows; i++) {
-      const off = f.type === 'brick' ? (i % 2) * (px / 2) : 0;
-      for (let j = -1; j < cols; j++) {
-        const x0 = bb.x0 + off + j * px, y0 = bb.y0 + i * py;
-        const c = clipPoly(poly, rectPts(x0, y0, f.w, f.h));
-        if (c.length < 3) continue;
-        const used = polyArea(c);
-        if (used < 500) continue;
-        out.push({ polys: [c], used, tileArea, diag: false, full: used >= tileArea - 1000 });
-      }
-    }
-    return out;
+    // layoutTiles hands the clip callback grid-local coordinates starting
+    // at (0,0); the room outline lives in absolute coordinates (which only
+    // happen to start at the origin too for an untouched preset — drag the
+    // outline anywhere else, as walls A/F's shared corner does, and the
+    // grid must be shifted by the bbox origin to still land on it).
+    const clip = (x, y, w, h) => {
+      const c = clipPoly(poly, rectPts(bb.x0 + x, bb.y0 + y, w, h));
+      return c.length >= 3 ? [c] : [];
+    };
+    return this.layoutTiles(f.type, bb.w, bb.h, f, f.j, clip, { pool: [], nextId: 1 });
   }
 
+  // General fallback: cut every opening in `ops` out of rect `t`, each as
+  // an independent guillotine cut. Used only where a wall might carry more
+  // than one opening (not possible through the UI, which caps a wall at
+  // one) or where the single opening sits fully inside the cell without
+  // touching any of its edges — both rare enough that the seam this leaves
+  // between the resulting rectangles doesn't matter.
   subtract(t, ops) {
     let cur = [t];
     for (const o of ops) {
@@ -902,59 +994,60 @@ class Component extends DCLogic {
     return cur;
   }
 
-  wallTiles(len, H, ops) {
-    const w = this.state.wall;
-    const tileArea = w.w * w.h;
-    const px = w.w + w.j, py = w.h + w.j;
-    const out = [];
-    if (w.type === 'diag') {
-      const cos = Math.SQRT1_2, sin = Math.SQRT1_2;
-      const R = Math.hypot(len, H) / 2 + Math.max(px, py) * 1.5;
-      const cx = len / 2, cy = H / 2;
-      const cols = Math.ceil((2 * R) / px) + 2, rows = Math.ceil((2 * R) / py) + 2;
-      const holes = ops.map((o) => rectPts(o.off, o.sill, o.w, o.h));
-      const bound = rectPts(0, 0, len, H);
-      for (let i = 0; i < rows; i++) {
-        for (let j = 0; j < cols; j++) {
-          const u = -R + j * px, v = -R + i * py;
-          const cs = [[u, v], [u + w.w, v], [u + w.w, v + w.h], [u, v + w.h]]
-            .map((q) => [cx + q[0] * cos - q[1] * sin, cy + q[0] * sin + q[1] * cos]);
-          const c = clipPoly(cs, bound);
-          if (c.length < 3) continue;
-          let used = polyArea(c);
-          if (used < 500) continue;
-          holes.forEach((hr) => {
-            const h = clipPoly(c, hr);
-            if (h.length > 2) used -= polyArea(h);
-          });
-          if (used < 500) continue;
-          out.push({ polys: [c], used, tileArea, full: used >= tileArea - 1000, diag: true });
-        }
-      }
+  // A wall carries at most one opening, so cutting it out of a grid cell is
+  // simple enough to trace as a single clean outline — a notch, an L, or
+  // two disjoint pieces when the hole cuts clean through — instead of
+  // decomposing into independent rectangles that leave a visible seam
+  // wherever two of them happen to touch (the "extra lines" a raised
+  // opening produced above and below itself).
+  holeRects(cell, ops) {
+    const whole = [rectPts(cell.x, cell.y, cell.w, cell.h)];
+    if (ops.length === 0) return whole;
+    if (ops.length > 1) {
+      return this.mergeRects(this.subtract(cell, ops)).map((p) => rectPts(p.x, p.y, p.w, p.h));
+    }
+    const o = ops[0];
+    const cx0 = cell.x, cy0 = cell.y, cx1 = cell.x + cell.w, cy1 = cell.y + cell.h;
+    const ax = Math.max(cx0, o.off), ay = Math.max(cy0, o.sill);
+    const bx = Math.min(cx1, o.off + o.w), by = Math.min(cy1, o.sill + o.h);
+    if (bx - ax <= 1 || by - ay <= 1) return whole;
+
+    const touchL = ax <= cx0 + 1, touchR = bx >= cx1 - 1, touchT = ay <= cy0 + 1, touchB = by >= cy1 - 1;
+
+    if (touchL && touchR && touchT && touchB) return [];
+    if (touchL && touchR) {
+      const out = [];
+      if (ay - cy0 > 1) out.push(rectPts(cx0, cy0, cell.w, ay - cy0));
+      if (cy1 - by > 1) out.push(rectPts(cx0, by, cell.w, cy1 - by));
       return out;
     }
-    const rows = Math.ceil((H + w.j) / py);
-    for (let i = 0; i < rows; i++) {
-      const y0 = i * py;
-      const hh = Math.min(w.h, H - y0);
-      if (hh < 2) continue;
-      const off = w.type === 'brick' ? (i % 2) * (px / 2) : 0;
-      for (let x = off - px; x < len - 1; x += px) {
-        const x0 = Math.max(x, 0), x1 = Math.min(x + w.w, len);
-        const ww = x1 - x0;
-        if (ww < 2) continue;
-        const pieces = this.subtract({ x: x0, y: y0, w: ww, h: hh }, ops);
-        if (!pieces.length) continue;
-        const merged = this.mergeRects(pieces);
-        const used = merged.reduce((a, p) => a + p.w * p.h, 0);
-        out.push({
-          polys: merged.map((p) => rectPts(p.x, p.y, p.w, p.h)),
-          used, tileArea, diag: false,
-          full: merged.length === 1 && ww >= w.w - 1 && hh >= w.h - 1
-        });
-      }
+    if (touchT && touchB) {
+      const out = [];
+      if (ax - cx0 > 1) out.push(rectPts(cx0, cy0, ax - cx0, cell.h));
+      if (cx1 - bx > 1) out.push(rectPts(bx, cy0, cx1 - bx, cell.h));
+      return out;
     }
-    return out;
+    if (touchT && touchL) return [[[cx0, cy1], [cx0, by], [bx, by], [bx, cy0], [cx1, cy0], [cx1, cy1]]];
+    if (touchT && touchR) return [[[cx0, cy0], [ax, cy0], [ax, by], [cx1, by], [cx1, cy1], [cx0, cy1]]];
+    if (touchB && touchL) return [[[cx0, cy0], [cx1, cy0], [cx1, cy1], [bx, cy1], [bx, ay], [cx0, ay]]];
+    if (touchB && touchR) return [[[cx0, cy0], [cx1, cy0], [cx1, ay], [ax, ay], [ax, cy1], [cx0, cy1]]];
+    if (touchT) return [[[cx0, cy0], [ax, cy0], [ax, by], [bx, by], [bx, cy0], [cx1, cy0], [cx1, cy1], [cx0, cy1]]];
+    if (touchB) return [[[cx0, cy0], [cx1, cy0], [cx1, cy1], [bx, cy1], [bx, ay], [ax, ay], [ax, cy1], [cx0, cy1]]];
+    if (touchL) return [[[cx0, cy0], [cx1, cy0], [cx1, cy1], [cx0, cy1], [cx0, by], [bx, by], [bx, ay], [cx0, ay]]];
+    if (touchR) return [[[cx0, cy0], [cx1, cy0], [cx1, ay], [ax, ay], [ax, by], [cx1, by], [cx1, cy1], [cx0, cy1]]];
+    // Hole floats entirely inside the cell without touching any edge — a
+    // true ring, which isn't a simple polygon. Rare for realistic opening
+    // sizes; fall back to the general decomposition.
+    return this.mergeRects(this.subtract(cell, ops)).map((p) => rectPts(p.x, p.y, p.w, p.h));
+  }
+
+  // `state` is shared and threaded across every wall in the room (passed
+  // in by the caller) so a piece cut from wall A's stock can be reused on
+  // wall C — real leftover tiles don't care which wall they end up on.
+  wallTiles(len, H, ops, state, wallLetter) {
+    const w = this.state.wall;
+    const clip = (x, y, ww, hh) => this.holeRects({ x, y, w: ww, h: hh }, ops);
+    return this.layoutTiles(w.type, len, H, w, w.j, clip, state, wallLetter);
   }
 
   /* ---------- drawing helpers ---------- */
@@ -1146,36 +1239,51 @@ class Component extends DCLogic {
     }
 
     /* ---- take-off ---- */
-    const ft = this.floorTiles();
-    // Off-cuts can now be irregular polygons (not just rectangles), so
-    // they're grouped and reported by area rather than a W×H size —
-    // grouping key rounds to the nearest 0.001 m² to merge near-identical
-    // pieces despite float noise.
+    const floorLayout = this.floorTiles();
+    const ft = floorLayout.tiles;
+    // Off-cuts are irregular polygons in general (a floor piece can be
+    // clipped by an angled wall), so they're grouped and reported by area
+    // rather than a W×H size — the grouping key rounds to the nearest
+    // 0.001 m² to merge near-identical pieces despite float noise. Only
+    // pieces still sitting unclaimed in a layout's leftover pool at the
+    // end (never picked up by a later cut) are genuine waste.
     const cutMap = new Map();
-    const add = (where, areaMm) => {
+    const addLeftover = (where, o) => {
+      const areaMm = o.w * o.h;
       const k = where + '|' + Math.round(areaMm / 1000);
       const cur = cutMap.get(k);
       if (cur) cur.n++; else cutMap.set(k, { where, areaMm, n: 1 });
     };
-    let lossMm = 0, boughtMm = 0;
+    floorLayout.leftovers.forEach((o) => addLeftover(en ? 'floor' : 'пол', o));
+
+    // A reused piece costs nothing extra to buy (its material was already
+    // charged when the tile it came from was first cut), so it only adds
+    // to `used`, never to `boughtMm`.
+    let boughtMm = 0, usedMm = 0, wholeCount = 0, cutCount = 0, reusedCount = 0;
     ft.forEach((t) => {
-      boughtMm += t.tileArea;
-      if (t.full) return;
-      lossMm += Math.max(0, t.tileArea - t.used);
-      add(en ? 'floor' : 'пол', t.used);
+      usedMm += t.used;
+      if (t.full) { wholeCount++; boughtMm += t.tileArea; return; }
+      cutCount++;
+      if (t.reused) reusedCount++; else boughtMm += t.tileArea;
     });
 
+    // Only a piece that actually has a partner elsewhere (its offcut got
+    // reused, or it *is* that reuse) is worth numbering or hovering — a
+    // fresh cut whose leftover never got picked up has nothing to point to.
+    const reusedFloorIds = new Set(ft.filter((t) => t.reused).map((t) => t.id));
+    const floorHover = s.hover && s.hover.surface === 'floor' ? s.hover.id : null;
     const fTiles = [], fNums = [];
-    let idx = 0;
     ft.forEach((t) => {
-      idx++;
+      const hoverable = t.id != null && reusedFloorIds.has(t.id);
       const fill = t.full ? 'var(--c-tile)' : 'var(--c-tile-cut)';
-      t.polys.forEach((p) => fTiles.push({ pts: p.map((q) => Math.round(q[0]) + ',' + Math.round(q[1])).join(' '), fill }));
-      if (this.props.showTileNumbers) {
+      t.polys.forEach((p) => fTiles.push({
+        pts: p.map((q) => Math.round(q[0]) + ',' + Math.round(q[1])).join(' '), fill, id: t.id, hoverable
+      }));
+      if (hoverable) {
         const p0 = t.polys[0];
         const cx = p0.reduce((a, q) => a + q[0], 0) / p0.length;
         const cy = p0.reduce((a, q) => a + q[1], 0) / p0.length;
-        fNums.push({ x: cx, y: cy + 30, t: String(idx) });
+        fNums.push({ x: cx, y: cy + 30, t: String(t.id) });
       }
     });
     const fDims = [
@@ -1186,35 +1294,62 @@ class Component extends DCLogic {
       viewBox: vb, preserveAspectRatio: 'xMidYMid meet',
       style: { width: '100%', height: '340px', display: 'block', overflow: 'visible' }
     },
-      fTiles.map((t, i) => E('polygon', { key: 't' + i, points: t.pts, fill: t.fill, stroke: 'var(--c-tile-line)', strokeWidth: 8 })),
+      fTiles.map((t, i) => E('polygon', {
+        key: 't' + i, points: t.pts,
+        fill: t.hoverable && t.id === floorHover ? 'var(--color-accent)' : t.fill,
+        stroke: 'var(--c-tile-line)', strokeWidth: 8,
+        style: t.hoverable ? { cursor: 'pointer' } : undefined,
+        onMouseEnter: t.hoverable ? (() => this.setHover('floor', t.id)) : undefined,
+        onMouseLeave: t.hoverable ? this.clearHover : undefined
+      })),
       E('polygon', { key: 'outline', points: pts, fill: 'none', stroke: 'var(--color-text)', strokeWidth: 22 }),
-      fNums.map((n, i) => E('text', { key: 'n' + i, x: n.x, y: n.y, fontSize: 88, fill: 'var(--c-muted)', textAnchor: 'middle' }, n.t)),
+      fNums.map((n, i) => E('text', { key: 'n' + i, x: n.x, y: n.y, fontSize: 88, fill: 'var(--c-muted)', textAnchor: 'middle', pointerEvents: 'none' }, n.t)),
       this.dimEls(fDims, 'fd')
     );
 
-    let wallCount = 0, wallWhole = 0, wallArea = 0;
+    let wallBuy = 0, wallArea = 0;
     const wallPolys = [];
-    const wallSheets = r.walls.map((w) => {
+    const wallState = { pool: [], nextId: 1 };
+    // Pass 1: lay out every wall (this is what fills and drains the shared
+    // pool), collecting stats and raw tiles. Which ids ended up reused is
+    // only known once *all* walls have had a turn, so drawing (pass 2,
+    // below) has to wait until this whole pass is done.
+    const wallData = r.walls.map((w) => {
       const L = w.len;
       const H = r.H;
       const ops = w.op;
-      const tiles = this.wallTiles(L, H, ops);
-      wallCount += tiles.length;
+      const tiles = this.wallTiles(L, H, ops, wallState, w.n).tiles;
       tiles.forEach((t) => {
-        boughtMm += t.tileArea;
-        if (t.full) { wallWhole++; return; }
-        lossMm += Math.max(0, t.tileArea - t.used);
-        add(en ? 'wall ' + w.n : 'стена ' + w.n, t.used);
+        usedMm += t.used;
+        if (t.full) { wholeCount++; boughtMm += t.tileArea; wallBuy++; return; }
+        cutCount++;
+        if (t.reused) reusedCount++; else { boughtMm += t.tileArea; wallBuy++; }
       });
       if (w.edge === selWallEdge) sel.tiles = tiles.length;
       wallPolys.push(tiles.flatMap((t) => t.polys.map((p) => ({ full: t.full, pts: p }))));
       wallArea += (L * H - ops.reduce((a, o) => a + o.w * o.h, 0)) / 1e6;
+      return { w, L, H, ops, tiles };
+    });
+    const reusedWallIds = new Set();
+    wallData.forEach((d) => d.tiles.forEach((t) => { if (t.reused) reusedWallIds.add(t.id); }));
+    const wallHover = s.hover && s.hover.surface === 'wall' ? s.hover.id : null;
 
-      const shapes = [];
-      tiles.forEach((t) => t.polys.forEach((p) => shapes.push({
-        pts: p.map((q) => Math.round(q[0]) + ',' + Math.round(H - q[1])).join(' '),
-        fill: t.full ? 'var(--c-tile)' : 'var(--c-tile-cut)'
-      })));
+    // Pass 2: draw each sheet now that reuse across the whole wall set is known.
+    const wallSheets = wallData.map(({ w, L, H, ops, tiles }) => {
+      const shapes = [], wNums = [];
+      tiles.forEach((t) => {
+        const hoverable = t.id != null && reusedWallIds.has(t.id);
+        t.polys.forEach((p) => shapes.push({
+          pts: p.map((q) => Math.round(q[0]) + ',' + Math.round(H - q[1])).join(' '),
+          fill: t.full ? 'var(--c-tile)' : 'var(--c-tile-cut)', id: t.id, hoverable
+        }));
+        if (hoverable) {
+          const p0 = t.polys[0];
+          const cx = p0.reduce((a, q) => a + q[0], 0) / p0.length;
+          const cy = p0.reduce((a, q) => a + q[1], 0) / p0.length;
+          wNums.push({ x: cx, y: H - cy + 30, t: String(t.id) });
+        }
+      });
       const holes = ops.map((o) => ({
         x: o.off, y: H - o.sill - o.h, w: o.w, h: o.h,
         tx: o.off + o.w / 2, ty: H - o.sill - o.h / 2 + 38,
@@ -1238,7 +1373,15 @@ class Component extends DCLogic {
         preserveAspectRatio: 'xMidYMid meet',
         style: { width: '100%', height: '320px', display: 'block', overflow: 'visible' }
       },
-        shapes.map((t, i) => E('polygon', { key: 'r' + i, points: t.pts, fill: t.fill, stroke: 'var(--c-tile-line)', strokeWidth: 8 })),
+        shapes.map((t, i) => E('polygon', {
+          key: 'r' + i, points: t.pts,
+          fill: t.hoverable && t.id === wallHover ? 'var(--color-accent)' : t.fill,
+          stroke: 'var(--c-tile-line)', strokeWidth: 8,
+          style: t.hoverable ? { cursor: 'pointer' } : undefined,
+          onMouseEnter: t.hoverable ? (() => this.setHover('wall', t.id)) : undefined,
+          onMouseLeave: t.hoverable ? this.clearHover : undefined
+        })),
+        wNums.map((n, i) => E('text', { key: 'wn' + i, x: n.x, y: n.y, fontSize: 80, fill: 'var(--c-muted)', textAnchor: 'middle', pointerEvents: 'none' }, n.t)),
         holes.map((h, i) => E('g', { key: 'h' + i },
           E('rect', { x: h.x, y: h.y, width: h.w, height: h.h, fill: 'var(--c-paper)', stroke: 'var(--color-accent)', strokeWidth: 18 }),
           E('text', { x: h.tx, y: h.ty, fontSize: 100, fill: 'var(--color-accent)', textAnchor: 'middle' }, h.label)
@@ -1254,6 +1397,9 @@ class Component extends DCLogic {
         svg
       };
     });
+    // Read after every wall's had a chance to draw from (and add to) the
+    // shared pool — only what's still sitting there is genuine leftover.
+    wallState.pool.forEach((o) => addLeftover(en ? 'wall ' + o.tag : 'стена ' + o.tag, o));
 
     this.last = {
       room: r,
@@ -1261,11 +1407,15 @@ class Component extends DCLogic {
       wallPolys
     };
 
-    const floorWhole = ft.filter((t) => t.full).length;
+    const floorBuy = ft.filter((t) => !t.reused).length;
     const floorArea = polyArea(r.poly) / 1e6;
     const cuts = Array.from(cutMap.values())
       .map((c) => ({ where: c.where, area: (c.areaMm / 1e6).toFixed(3) + ' м²', n: c.n }))
       .sort((a, b) => b.n - a.n);
+    // What's actually charged for is only the tiles bought (whole ones and
+    // the ones a cut piece was freshly sawn from); a reused off-cut adds to
+    // `usedMm` for free, which is exactly why reuse lowers the loss below.
+    const lossMm = Math.max(0, boughtMm - usedMm);
     const lossM2 = lossMm / 1e6, boughtM2 = boughtMm / 1e6;
     const pct = boughtM2 > 0 ? (lossM2 / boughtM2) * 100 : 0;
 
@@ -1306,11 +1456,12 @@ class Component extends DCLogic {
         count: ft.length + (en ? ' pcs' : ' шт')
       },
       totals: {
-        floor: ft.length,
-        wall: wallCount,
+        floor: floorBuy,
+        wall: wallBuy,
         floorArea: floorArea.toFixed(2) + ' м²',
         wallArea: wallArea.toFixed(2) + ' м²',
-        wholeCut: (floorWhole + wallWhole) + ' / ' + (ft.length + wallCount - floorWhole - wallWhole),
+        wholeCut: wholeCount + ' / ' + cutCount,
+        reused: reusedCount,
         bought: boughtM2.toFixed(2) + ' м²',
         loss: lossM2.toFixed(2) + ' м² · ' + pct.toFixed(1) + '%'
       }
