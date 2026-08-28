@@ -51,6 +51,7 @@
     --c-3d-cut: #cdc6f2;
     --c-3d-grout: var(--color-neutral-500);
   }
+  [data-print-only] { display: none; }
   a { color: var(--color-accent); }
   a:hover { color: var(--color-accent-400); }
   input:focus-visible, button:focus-visible, select:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
@@ -64,6 +65,10 @@
       --color-accent: #5d5294; --color-divider: #cfd3e5;
     }
     [data-noprint] { display: none !important; }
+    /* The room plan is normally only shown live in block 1 (with its editing
+       chrome around it); for print it's duplicated as the very first sheet
+       instead, so the printed set opens with the overall drawing. */
+    [data-print-only] { display: flex !important; }
     .app-shell { min-height: 0 !important; }
     .app-inner { max-width: none !important; padding: 0 !important; gap: 0 !important; }
     .print-section { padding: 0 !important; border: none !important; background: transparent !important; gap: 4mm !important; }
@@ -311,6 +316,12 @@
       </div>
 
       <div class="sheets-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: var(--space-8);">
+        <div data-sheet="1" data-print-only="1" style="flex-direction: column; gap: var(--space-3); background: var(--c-paper); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: var(--space-6);">
+          <div style="display: flex; align-items: baseline; gap: var(--space-3); border-bottom: 1px solid var(--color-divider); padding-bottom: var(--space-2);">
+            <span data-en="Room plan" style="font-family: var(--font-heading); font-size: 13px;">Схема помещения</span>
+          </div>
+          <div style="display: block; min-width: 0;">{{ planSvg }}</div>
+        </div>
         <div data-sheet="1" style="display: flex; flex-direction: column; gap: var(--space-3); background: var(--c-paper); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: var(--space-6);">
           <div style="display: flex; align-items: baseline; gap: var(--space-3); border-bottom: 1px solid var(--color-divider); padding-bottom: var(--space-2);">
             <span data-en="Floor" style="font-family: var(--font-heading); font-size: 13px;">Пол</span>
@@ -337,30 +348,47 @@
 
 <sc-if value="{{ projectModalOpen }}" hint-placeholder-val="{{ false }}">
   <div data-noprint="1" onClick="{{ closeProjectModal }}" style="position: fixed; inset: 0; background: color-mix(in srgb, black 45%, transparent); z-index: 60; display: flex; align-items: center; justify-content: center; padding: var(--space-6);">
-    <div onClick="{{ stopProjectModalClick }}" style="background: var(--color-surface); border: 1px solid var(--c-line); border-radius: var(--radius-md); width: 420px; max-width: 100%; max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow-md);">
-      <div style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-5) var(--space-5) var(--space-4); border-bottom: 1px solid var(--color-divider);">
+    <div onClick="{{ stopProjectModalClick }}" style="background: var(--color-surface); border: 1px solid var(--c-line); border-radius: var(--radius-md); width: 480px; max-width: 100%; max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow-md);">
+      <div style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-6) var(--space-6) var(--space-5); border-bottom: 1px solid var(--color-divider);">
         <span data-en="Projects" style="font-family: var(--font-heading); font-weight: 500; font-size: 15px;">Проекты</span>
-        <button type="button" onClick="{{ closeProjectModal }}" style="margin-left: auto; display: grid; place-items: center; width: 26px; height: 26px; background: transparent; color: var(--c-muted); border: 0; border-radius: var(--radius-sm); font: inherit; font-size: 16px; cursor: pointer;" style-hover="background: color-mix(in srgb, var(--color-accent) 14%, transparent); color: var(--color-accent);">
+        <button type="button" onClick="{{ closeProjectModal }}" style="margin-left: auto; display: grid; place-items: center; width: 28px; height: 28px; background: transparent; color: var(--c-muted); border: 0; border-radius: var(--radius-sm); font: inherit; font-size: 16px; cursor: pointer;" style-hover="background: color-mix(in srgb, var(--color-accent) 14%, transparent); color: var(--color-accent);">
           <i class="ph ph-x"></i>
         </button>
       </div>
-      <div style="display: flex; gap: var(--space-2); padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--color-divider);">
-        <input id="newProjectNameInput" type="text" placeholder="Название проекта" onKeyDown="{{ onNewProjectNameKey }}" style="flex: 1; min-width: 0; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 10px; font: inherit; font-size: 12px;">
-        <button type="button" onClick="{{ createProjectFromInput }}" style="display: inline-flex; align-items: center; gap: 6px; background: transparent; color: var(--color-accent); border: 1px solid var(--color-accent); border-radius: var(--radius-sm); padding: 6px 12px; font: inherit; font-size: 12px; cursor: pointer; white-space: nowrap;" style-hover="background: color-mix(in srgb, var(--color-accent) 14%, transparent);">
+      <div style="display: flex; flex-wrap: wrap; gap: var(--space-3); padding: var(--space-5) var(--space-6); border-bottom: 1px solid var(--color-divider);">
+        <input id="newProjectNameInput" type="text" placeholder="Название проекта" onKeyDown="{{ onNewProjectNameKey }}" style="flex: 1; min-width: 140px; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 7px 10px; font: inherit; font-size: 12px;">
+        <button type="button" onClick="{{ createProjectFromInput }}" style="display: inline-flex; align-items: center; gap: 6px; background: transparent; color: var(--color-accent); border: 1px solid var(--color-accent); border-radius: var(--radius-sm); padding: 7px 12px; font: inherit; font-size: 12px; cursor: pointer; white-space: nowrap;" style-hover="background: color-mix(in srgb, var(--color-accent) 14%, transparent);">
           <i class="ph ph-plus" style="font-size: 14px;"></i>
           <span data-en="New">Создать</span>
         </button>
+        <button type="button" onClick="{{ triggerImport }}" style="display: inline-flex; align-items: center; gap: 6px; background: transparent; color: var(--c-muted); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 7px 12px; font: inherit; font-size: 12px; cursor: pointer; white-space: nowrap;" style-hover="border-color: var(--color-accent); color: var(--color-accent);">
+          <i class="ph ph-upload-simple" style="font-size: 14px;"></i>
+          <span data-en="Import">Импорт</span>
+        </button>
+        <input id="importProjectInput" type="file" accept="application/json,.json" onChange="{{ onImportFile }}" style="display: none;">
       </div>
-      <div style="overflow-y: auto; padding: var(--space-3) var(--space-3) var(--space-5);">
+      <div style="overflow-y: auto; padding: var(--space-4) var(--space-4) var(--space-6);">
         <sc-for list="{{ projectList }}" as="p" hint-placeholder-count="3">
-          <button type="button" onClick="{{ p.open }}" style="display: flex; align-items: center; gap: var(--space-3); width: 100%; box-sizing: border-box; text-align: left; background: {{ p.bg }}; color: var(--color-text); border: 0; border-radius: var(--radius-sm); padding: 9px 10px; margin-bottom: 2px; font: inherit; font-size: 13px; cursor: pointer;" style-hover="background: color-mix(in srgb, var(--color-accent) 12%, transparent);">
-            <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ p.name }}</span>
-            <span style="font-size: 11px; color: var(--c-muted); white-space: nowrap;">{{ p.date }}</span>
-          </button>
+          <div style="display: flex; align-items: center; gap: var(--space-2); background: {{ p.bg }}; border-radius: var(--radius-sm); margin-bottom: 6px;">
+            <button type="button" onClick="{{ p.open }}" style="display: flex; align-items: center; gap: var(--space-3); flex: 1; min-width: 0; box-sizing: border-box; text-align: left; background: transparent; color: var(--color-text); border: 0; border-radius: var(--radius-sm); padding: 12px 14px; font: inherit; font-size: 13px; cursor: pointer;" style-hover="background: color-mix(in srgb, var(--color-accent) 12%, transparent);">
+              <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ p.name }}</span>
+              <span style="font-size: 11px; color: var(--c-muted); white-space: nowrap;">{{ p.date }}</span>
+            </button>
+            <button type="button" onClick="{{ p.exportClick }}" title="Export as JSON" style="display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; background: transparent; color: var(--c-muted); border: 0; border-radius: var(--radius-sm); font-size: 15px; cursor: pointer;" style-hover="background: color-mix(in srgb, var(--color-accent) 14%, transparent); color: var(--color-accent);">
+              <i class="ph ph-download-simple"></i>
+            </button>
+            <button type="button" onClick="{{ p.deleteClick }}" title="Delete" style="display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; margin-right: 6px; background: transparent; color: var(--c-muted); border: 0; border-radius: var(--radius-sm); font-size: 15px; cursor: pointer;" style-hover="background: color-mix(in srgb, #e5484d 14%, transparent); color: #e5484d;">
+              <i class="ph ph-trash"></i>
+            </button>
+          </div>
         </sc-for>
       </div>
     </div>
   </div>
+</sc-if>
+
+<sc-if value="{{ dimHoverOpen }}" hint-placeholder-val="{{ false }}">
+  <div data-noprint="1" style="{{ dimHoverStyle }}">{{ dimHoverText }}</div>
 </sc-if>
 
 </x-dc>
@@ -425,6 +453,29 @@ function rectPts(x, y, w, h) {
 const PROJECTS_KEY = 'tileLayoutProjects';
 const CURRENT_PROJECT_KEY = 'tileLayoutCurrentProjectId';
 const DEFAULT_PROJECT_NAME = 'Санузел · проект 04';
+// Bumped whenever the saved-project shape changes. Stamped on every export
+// and every autosave, so an imported .json can be checked against it before
+// its data is trusted.
+const PROJECT_SAVE_VERSION = 1;
+
+// Shared by both localStorage loads and file import: checks a save's version
+// isn't from a newer app than this one, walks it through any migrations
+// needed to reach the current shape (none exist yet — this is the only
+// format version so far, but the loop is here so future changes have
+// somewhere to hook in), then verifies the fields actually look right.
+function normalizeProjectData(raw) {
+  if (!raw || typeof raw !== 'object') return { ok: false, reason: 'format' };
+  let version = typeof raw.version === 'number' ? raw.version : 0;
+  if (version > PROJECT_SAVE_VERSION) return { ok: false, reason: 'newer' };
+  while (version < PROJECT_SAVE_VERSION) { version++; /* future: raw = migrateVX(raw); */ }
+  const okShape = (raw.poly === null || Array.isArray(raw.poly)) &&
+    (raw.ops === null || Array.isArray(raw.ops)) &&
+    typeof raw.roomH === 'number' &&
+    raw.floor && typeof raw.floor === 'object' &&
+    raw.wall && typeof raw.wall === 'object';
+  if (!okShape) return { ok: false, reason: 'shape' };
+  return { ok: true, data: { poly: raw.poly, ops: raw.ops, roomH: raw.roomH, floor: raw.floor, wall: raw.wall } };
+}
 
 function loadProjectList() {
   try {
@@ -452,7 +503,7 @@ function newProjectId() {
 // `renderVals()` are recomputed fresh from these fields, so they're
 // deliberately left out of what gets written to storage.
 function projectSnapshot(id, name, s) {
-  return { id, name, savedAt: Date.now(), poly: s.poly, ops: s.ops, roomH: s.roomH, floor: s.floor, wall: s.wall };
+  return { id, name, version: PROJECT_SAVE_VERSION, savedAt: Date.now(), poly: s.poly, ops: s.ops, roomH: s.roomH, floor: s.floor, wall: s.wall };
 }
 
 function loadInitialProject() {
@@ -477,6 +528,7 @@ class Component extends DCLogic {
       menu: null,
       sel: { kind: 'wall', i: 0 },
       hover: null,
+      dimHover: null,
       floor: { w: 600, h: 600, t: 9, j: 2, type: 'classic' },
       wall: { w: 600, h: 600, t: 8, j: 2, type: 'classic' },
       projectId: null,
@@ -574,6 +626,40 @@ class Component extends DCLogic {
     });
   };
 
+  deleteProject = (proj) => {
+    const en = this.state.lang === 'en';
+    const msg = en
+      ? 'Delete project “' + proj.name + '”? This can’t be undone.'
+      : 'Удалить проект «' + proj.name + '»? Это действие нельзя отменить.';
+    if (!confirm(msg)) return;
+    let list = loadProjectList().filter((p) => p.id !== proj.id);
+    // Never leave the app with zero projects to autosave into — deleting
+    // the last one just replaces it with a fresh default.
+    if (list.length === 0) {
+      const id = newProjectId();
+      list = [projectSnapshot(id, DEFAULT_PROJECT_NAME, {
+        poly: null, ops: null, roomH: 2500,
+        floor: { w: 600, h: 600, t: 9, j: 2, type: 'classic' },
+        wall: { w: 600, h: 600, t: 8, j: 2, type: 'classic' }
+      })];
+    }
+    saveProjectList(list);
+    if (proj.id === this.state.projectId) {
+      const next = list[0];
+      setCurrentProjectId(next.id);
+      this.setState({
+        poly: next.poly, ops: next.ops, roomH: next.roomH, floor: next.floor, wall: next.wall,
+        projectId: next.id, projectName: next.name,
+        menu: null, hover: null, sel: { kind: 'wall', i: 0 }
+      });
+    } else {
+      // Deleted a project other than the current one — state doesn't
+      // reference it, so nothing else would trigger a re-render to drop it
+      // from the open list.
+      this.forceUpdate();
+    }
+  };
+
   createProject = (rawName) => {
     const name = (rawName || '').trim() || (this.state.lang === 'en' ? 'New project' : 'Новый проект');
     const id = newProjectId();
@@ -597,6 +683,62 @@ class Component extends DCLogic {
 
   onNewProjectNameKey = (e) => {
     if (e.key === 'Enter') this.createProjectFromInput();
+  };
+
+  exportProject = (proj) => {
+    const data = {
+      version: PROJECT_SAVE_VERSION, name: proj.name,
+      poly: proj.poly, ops: proj.ops, roomH: proj.roomH, floor: proj.floor, wall: proj.wall
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = (proj.name || 'project').trim().replace(/[\\/:*?"<>|]+/g, '_') + '.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  triggerImport = () => {
+    const el = document.getElementById('importProjectInput');
+    if (el) { el.value = ''; el.click(); }
+  };
+
+  onImportFile = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const en = this.state.lang === 'en';
+    const reader = new FileReader();
+    reader.onload = () => {
+      let raw;
+      try { raw = JSON.parse(reader.result); } catch (err) {
+        alert(en ? 'This is not a valid JSON file.' : 'Файл повреждён или это не JSON.');
+        return;
+      }
+      const res = normalizeProjectData(raw);
+      if (!res.ok) {
+        const msgs = {
+          newer: en ? 'This save was made by a newer version of the app and can’t be opened here.' : 'Файл сохранён более новой версией приложения — его нельзя открыть в этой версии.',
+          shape: en ? 'This file doesn’t look like a project save.' : 'Это не похоже на файл сохранения проекта.',
+          format: en ? 'This file doesn’t look like a project save.' : 'Это не похоже на файл сохранения проекта.'
+        };
+        alert(msgs[res.reason] || msgs.shape);
+        return;
+      }
+      const id = newProjectId();
+      const name = (raw.name && String(raw.name).trim()) || file.name.replace(/\.json$/i, '') || (en ? 'Imported project' : 'Импортированный проект');
+      const list = loadProjectList();
+      list.push(Object.assign({ id, name, savedAt: Date.now(), version: PROJECT_SAVE_VERSION }, res.data));
+      saveProjectList(list);
+      setCurrentProjectId(id);
+      this.setState(Object.assign({
+        projectId: id, projectName: name,
+        projectModalOpen: false, menu: null, hover: null, sel: { kind: 'wall', i: 0 }
+      }, res.data));
+    };
+    reader.readAsText(file);
   };
 
   css(name) {
@@ -651,6 +793,13 @@ class Component extends DCLogic {
   // share one id sequence) since a floor id and a wall id can coincide.
   setHover = (surface, id) => this.setState({ hover: { surface, id } });
   clearHover = () => this.setState({ hover: null });
+
+  // Instant (no OS hover delay) size tooltip for any tile in block 4 — set
+  // once on enter from the hovered piece's own screen rect, not tracked on
+  // every mousemove, since a full re-render (retiling every wall) is too
+  // heavy to run at pointer-move frequency.
+  setDimHover = (text, rect) => this.setState({ dimHover: { text, x: rect.left + rect.width / 2, y: rect.top } });
+  clearDimHover = () => this.setState({ dimHover: null });
 
   set(group, key, e) {
     const v = Math.max(1, Math.min(3000, parseInt(e.target.value, 10) || 1));
@@ -1222,6 +1371,15 @@ class Component extends DCLogic {
     };
   }
 
+  // Bounding-box size of one tile piece's actual polygon — used for the
+  // hover tooltip in the cut sheets, so a piece clipped by an angled wall or
+  // an opening still reports its true installed footprint, not the nominal
+  // grid-cell size.
+  polyBBox(poly) {
+    const xs = poly.map((p) => p[0]), ys = poly.map((p) => p[1]);
+    return { w: Math.max.apply(null, xs) - Math.min.apply(null, xs), h: Math.max.apply(null, ys) - Math.min.apply(null, ys) };
+  }
+
   dimEls(dims, key) {
     const E = React.createElement;
     return dims.filter((d) => Math.abs(Number(d.label)) > 0).map((d, i) => E('g', { key: key + i },
@@ -1245,6 +1403,9 @@ class Component extends DCLogic {
     const pad = 620;
     const vb = [bb.x0 - pad, bb.y0 - pad, bb.w + pad * 2, bb.h + pad * 2].join(' ');
     const pts = r.poly.map((p) => p[0] + ',' + p[1]).join(' ');
+
+    const selWallEdge = s.sel && s.sel.kind === 'wall' ? s.sel.i : -1;
+    const selOpIndex = s.sel && s.sel.kind === 'op' ? s.sel.i : -1;
 
     const dims = [], labels = [], openings = [];
     r.walls.forEach((w) => {
@@ -1271,11 +1432,26 @@ class Component extends DCLogic {
           ty: w.a[1] + uy * (op.off + op.w / 2) - ny * 430 + 38,
           label: op.id + ' · ' + op.w
         });
+        // Only for the selected opening: an inner dimension chain (between
+        // the wall itself and its own overall-length dimension) showing how
+        // far the opening sits from each end of its wall.
+        if (op.index === selOpIndex) {
+          const o2 = 130;
+          const iax = w.a[0] + nx * o2, iay = w.a[1] + ny * o2;
+          const ibx = w.b[0] + nx * o2, iby = w.b[1] + ny * o2;
+          const p0x = w.a[0] + ux * op.off + nx * o2, p0y = w.a[1] + uy * op.off + ny * o2;
+          const p1x = w.a[0] + ux * (op.off + op.w) + nx * o2, p1y = w.a[1] + uy * (op.off + op.w) + ny * o2;
+          const mkDim = (sx, sy, ex, ey, label) => ({
+            ax: sx, ay: sy, bx: ex, by: ey,
+            t1ax: sx - nx * 70, t1ay: sy - ny * 70, t1bx: sx + nx * 70, t1by: sy + ny * 70,
+            t2ax: ex - nx * 70, t2ay: ey - ny * 70, t2bx: ex + nx * 70, t2by: ey + ny * 70,
+            tx: (sx + ex) / 2 + nx * 150, ty: (sy + ey) / 2 + ny * 150 + 38, anchor: 'middle', label: String(Math.round(label))
+          });
+          dims.push(mkDim(iax, iay, p0x, p0y, op.off));
+          dims.push(mkDim(p1x, p1y, ibx, iby, L - op.off - op.w));
+        }
       });
     });
-
-    const selWallEdge = s.sel && s.sel.kind === 'wall' ? s.sel.i : -1;
-    const selOpIndex = s.sel && s.sel.kind === 'op' ? s.sel.i : -1;
 
     const planSvg = E('svg', {
       id: 'planSvg', viewBox: vb, preserveAspectRatio: 'xMidYMid meet',
@@ -1428,9 +1604,13 @@ class Component extends DCLogic {
     ft.forEach((t) => {
       const hoverable = t.id != null && reusedFloorIds.has(t.id);
       const fill = t.full ? 'var(--c-tile)' : 'var(--c-tile-cut)';
-      t.polys.forEach((p) => fTiles.push({
-        pts: p.map((q) => Math.round(q[0]) + ',' + Math.round(q[1])).join(' '), fill, id: t.id, hoverable
-      }));
+      t.polys.forEach((p) => {
+        const bb2 = this.polyBBox(p);
+        fTiles.push({
+          pts: p.map((q) => Math.round(q[0]) + ',' + Math.round(q[1])).join(' '), fill, id: t.id, hoverable,
+          dim: Math.round(bb2.w) + '×' + Math.round(bb2.h)
+        });
+      });
       if (hoverable) {
         const p0 = t.polys[0];
         const cx = p0.reduce((a, q) => a + q[0], 0) / p0.length;
@@ -1451,8 +1631,8 @@ class Component extends DCLogic {
         fill: t.hoverable && t.id === floorHover ? 'var(--color-accent)' : t.fill,
         stroke: 'var(--c-tile-line)', strokeWidth: 8,
         style: t.hoverable ? { cursor: 'pointer' } : undefined,
-        onMouseEnter: t.hoverable ? (() => this.setHover('floor', t.id)) : undefined,
-        onMouseLeave: t.hoverable ? this.clearHover : undefined
+        onMouseEnter: (e) => { if (t.hoverable) this.setHover('floor', t.id); this.setDimHover(t.dim, e.currentTarget.getBoundingClientRect()); },
+        onMouseLeave: () => { if (t.hoverable) this.clearHover(); this.clearDimHover(); }
       })),
       E('polygon', { key: 'outline', points: pts, fill: 'none', stroke: 'var(--color-text)', strokeWidth: 22 }),
       fNums.map((n, i) => E('text', { key: 'n' + i, x: n.x, y: n.y, fontSize: 88, fill: 'var(--c-muted)', textAnchor: 'middle', pointerEvents: 'none' }, n.t)),
@@ -1491,10 +1671,14 @@ class Component extends DCLogic {
       const shapes = [], wNums = [];
       tiles.forEach((t) => {
         const hoverable = t.id != null && reusedWallIds.has(t.id);
-        t.polys.forEach((p) => shapes.push({
-          pts: p.map((q) => Math.round(q[0]) + ',' + Math.round(H - q[1])).join(' '),
-          fill: t.full ? 'var(--c-tile)' : 'var(--c-tile-cut)', id: t.id, hoverable
-        }));
+        t.polys.forEach((p) => {
+          const bb2 = this.polyBBox(p);
+          shapes.push({
+            pts: p.map((q) => Math.round(q[0]) + ',' + Math.round(H - q[1])).join(' '),
+            fill: t.full ? 'var(--c-tile)' : 'var(--c-tile-cut)', id: t.id, hoverable,
+            dim: Math.round(bb2.w) + '×' + Math.round(bb2.h)
+          });
+        });
         if (hoverable) {
           const p0 = t.polys[0];
           const cx = p0.reduce((a, q) => a + q[0], 0) / p0.length;
@@ -1530,8 +1714,8 @@ class Component extends DCLogic {
           fill: t.hoverable && t.id === wallHover ? 'var(--color-accent)' : t.fill,
           stroke: 'var(--c-tile-line)', strokeWidth: 8,
           style: t.hoverable ? { cursor: 'pointer' } : undefined,
-          onMouseEnter: t.hoverable ? (() => this.setHover('wall', t.id)) : undefined,
-          onMouseLeave: t.hoverable ? this.clearHover : undefined
+          onMouseEnter: (e) => { if (t.hoverable) this.setHover('wall', t.id); this.setDimHover(t.dim, e.currentTarget.getBoundingClientRect()); },
+          onMouseLeave: () => { if (t.hoverable) this.clearHover(); this.clearDimHover(); }
         })),
         wNums.map((n, i) => E('text', { key: 'wn' + i, x: n.x, y: n.y, fontSize: 80, fill: 'var(--c-muted)', textAnchor: 'middle', pointerEvents: 'none' }, n.t)),
         holes.map((h, i) => E('g', { key: 'h' + i },
@@ -1580,7 +1764,9 @@ class Component extends DCLogic {
           day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
         }),
         bg: p.id === s.projectId ? 'color-mix(in srgb, var(--color-accent) 16%, transparent)' : 'transparent',
-        open: () => this.openProject(p)
+        open: () => this.openProject(p),
+        exportClick: () => this.exportProject(p),
+        deleteClick: () => this.deleteProject(p)
       }));
 
     return {
@@ -1600,12 +1786,20 @@ class Component extends DCLogic {
       stopProjectModalClick: this.stopProjectModalClick,
       createProjectFromInput: this.createProjectFromInput,
       onNewProjectNameKey: this.onNewProjectNameKey,
+      triggerImport: this.triggerImport,
+      onImportFile: this.onImportFile,
 
       planSvg, floorSvg, wallSheets, cuts, sel,
       menuOpen: !!menu,
       menuItems,
       menuStyle: menu
         ? 'position:absolute;left:' + menu.x + 'px;top:' + menu.y + 'px;z-index:20;min-width:200px;background:var(--color-surface);border:1px solid var(--color-accent);border-radius:var(--radius-sm);padding:4px 0;box-shadow:var(--shadow-md);'
+        : 'display:none;',
+
+      dimHoverOpen: !!s.dimHover,
+      dimHoverText: s.dimHover ? s.dimHover.text : '',
+      dimHoverStyle: s.dimHover
+        ? 'position:fixed;left:' + s.dimHover.x + 'px;top:' + s.dimHover.y + 'px;transform:translate(-50%,-100%) translateY(-8px);pointer-events:none;z-index:70;background:var(--color-surface);border:1px solid var(--c-line);border-radius:var(--radius-sm);padding:4px 8px;font-size:11px;color:var(--color-text);box-shadow:var(--shadow-md);white-space:nowrap;'
         : 'display:none;',
 
       roomH: s.roomH, roomHKey: 'roomH-' + s.roomH,
