@@ -78,10 +78,16 @@
       padding: 3mm !important; border-radius: 0 !important;
       margin-bottom: 6mm;
     }
-    /* Full page width, height set by the drawing's own aspect ratio (not
-       forced) — a compact wall sheet then only claims the room it needs,
-       instead of every sheet reserving a full page regardless of shape. */
-    [data-sheet] svg { width: 100% !important; height: auto !important; }
+    /* Sized by the drawing's own aspect ratio, capped on BOTH axes — a wide
+       sheet (floor, a long wall) still claims the full page width, but a
+       short wall isn't stretched out to that same width, since its height
+       is nearly fixed (driven by room height, not wall length) and doing
+       so used to blow its height past a single page for anything narrower
+       than about 1.5m, silently dropping it off the printed sheet set. */
+    [data-sheet] svg {
+      display: block; width: auto !important; height: auto !important;
+      max-width: 100% !important; max-height: 250mm !important; margin: 0 auto;
+    }
   }
 </style>
 </helmet>
@@ -1080,20 +1086,42 @@ class Component extends DCLogic {
     window.addEventListener('pointerup', up);
   };
 
+  // Only the corner shared with the next wall moves — the wall being
+  // edited changes length, its immediate neighbor pivots at that shared
+  // corner (as it must, since they share a point), and nothing beyond that
+  // is touched. The previous version also shifted the corner *after* that
+  // one by the same delta to keep the immediate neighbor's own length
+  // fixed, which silently pushed the length change one wall further down
+  // the chain instead of containing it.
   setWallLength(edge, len) {
-    const poly = this.poly().map((p) => p.slice());
-    const n = poly.length;
-    const a = poly[edge], b = poly[(edge + 1) % n];
-    const cur = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    const poly0 = this.poly();
+    const n = poly0.length;
+    const a = poly0[edge], b0 = poly0[(edge + 1) % n];
+    const cur = Math.hypot(b0[0] - a[0], b0[1] - a[1]);
     if (cur < 1) return;
     this.pushHistory();
-    const L = Math.max(300, this.wallMinLen(edge), Math.min(12000, Math.round(len / 25) * 25));
-    const ux = (b[0] - a[0]) / cur, uy = (b[1] - a[1]) / cur;
-    const d = L - cur;
     const bi = (edge + 1) % n, ci = (edge + 2) % n;
-    poly[bi] = [Math.round(b[0] + ux * d), Math.round(b[1] + uy * d)];
-    const c = poly[ci];
-    poly[ci] = [Math.round(c[0] + ux * d), Math.round(c[1] + uy * d)];
+    const c = poly0[ci];
+    const ux = (b0[0] - a[0]) / cur, uy = (b0[1] - a[1]) / cur;
+    const minNext = this.wallMinLen(bi);
+    const validLen = (L) => {
+      const bx = a[0] + ux * L, by = a[1] + uy * L;
+      return Math.hypot(c[0] - bx, c[1] - by) >= minNext;
+    };
+    let L = Math.max(300, this.wallMinLen(edge), Math.min(12000, Math.round(len / 25) * 25));
+    if (!validLen(L)) {
+      // The current length is always valid by definition — binary-search
+      // from there toward the requested one for the furthest point that
+      // still leaves the neighboring wall long enough for its own opening.
+      let lo = cur, hi = L;
+      for (let k = 0; k < 20; k++) {
+        const mid = (lo + hi) / 2;
+        if (validLen(mid)) lo = mid; else hi = mid;
+      }
+      L = lo;
+    }
+    const poly = poly0.map((p) => p.slice());
+    poly[bi] = [Math.round(a[0] + ux * L), Math.round(a[1] + uy * L)];
     this.setState({ poly, ops: this.ops() });
   }
 
@@ -1244,7 +1272,14 @@ class Component extends DCLogic {
     const whole = type === 'village'
       ? Math.max(0, Math.floor(size / pitch))
       : Math.max(0, Math.floor(size / pitch) - 1);
-    if (whole <= 0) return [size];
+    // Only fall back to a single uncut piece when the surface doesn't even
+    // reach one full tile — there's nothing to center in that case. For
+    // anything bigger (even if `whole` computes to 0, i.e. the surface fits
+    // one-point-something tiles) the two-edge-cut formula below already
+    // produces a pair of pieces no larger than a tile each; skipping it
+    // here used to return the *entire* span as one oversized "tile" instead
+    // (e.g. a whole 1200mm wall as a single cell with 600mm tiles).
+    if (size <= t) return [size];
     const each = (size - whole * t - (whole + 1) * joint) / 2;
     const segs = [each];
     for (let k = 0; k < whole; k++) segs.push(t);
