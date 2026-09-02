@@ -568,6 +568,17 @@ class Component extends DCLogic {
         this.push3d();
       })
       .catch((e) => console.warn('3D view unavailable', e));
+
+    this.onKeyDown = (e) => {
+      // Let the browser's own text-field undo run untouched while an input
+      // is focused — only intercept Ctrl/Cmd+Z away from form fields.
+      const tag = e.target && e.target.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target && e.target.isContentEditable)) return;
+      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'z') return;
+      e.preventDefault();
+      if (e.shiftKey) this.redo(); else this.undo();
+    };
+    window.addEventListener('keydown', this.onKeyDown);
   }
 
   loadScript(src) {
@@ -599,7 +610,46 @@ class Component extends DCLogic {
 
   componentWillUnmount() {
     if (this.view) this.view.dispose();
+    if (this.onKeyDown) window.removeEventListener('keydown', this.onKeyDown);
   }
+
+  /* ---------- undo / redo ---------- */
+  // Instance fields, not React state — recorded explicitly at each
+  // completed edit (drag start, or a field committing on blur), not on
+  // every intermediate drag frame, so one Ctrl+Z steps back a whole action
+  // instead of one pixel of a drag.
+  histPast = [];
+  histFuture = [];
+
+  clearHistory() {
+    this.histPast = [];
+    this.histFuture = [];
+  }
+
+  historySnapshot() {
+    const s = this.state;
+    return JSON.parse(JSON.stringify({ poly: s.poly, ops: s.ops, roomH: s.roomH, floor: s.floor, wall: s.wall }));
+  }
+
+  pushHistory() {
+    this.histPast.push(this.historySnapshot());
+    this.histFuture = [];
+    if (this.histPast.length > 100) this.histPast.shift();
+  }
+
+  undo = () => {
+    if (!this.histPast.length) return;
+    const prev = this.histPast.pop();
+    this.histFuture.push(this.historySnapshot());
+    this.setState(Object.assign({ menu: null, hover: null, sel: { kind: 'wall', i: 0 } }, prev));
+  };
+
+  redo = () => {
+    if (!this.histFuture.length) return;
+    const next = this.histFuture.pop();
+    this.histPast.push(this.historySnapshot());
+    this.setState(Object.assign({ menu: null, hover: null, sel: { kind: 'wall', i: 0 } }, next));
+  };
 
   // Runs after every update — cheap enough (one small JSON blob) that it's
   // simpler to just always re-write the current project than to track
@@ -619,6 +669,7 @@ class Component extends DCLogic {
 
   openProject = (proj) => {
     setCurrentProjectId(proj.id);
+    this.clearHistory();
     this.setState({
       poly: proj.poly, ops: proj.ops, roomH: proj.roomH, floor: proj.floor, wall: proj.wall,
       projectId: proj.id, projectName: proj.name,
@@ -647,6 +698,7 @@ class Component extends DCLogic {
     if (proj.id === this.state.projectId) {
       const next = list[0];
       setCurrentProjectId(next.id);
+      this.clearHistory();
       this.setState({
         poly: next.poly, ops: next.ops, roomH: next.roomH, floor: next.floor, wall: next.wall,
         projectId: next.id, projectName: next.name,
@@ -669,6 +721,7 @@ class Component extends DCLogic {
     list.push({ id, name, savedAt: Date.now(), poly: null, ops: null, roomH: 2500, floor, wall });
     saveProjectList(list);
     setCurrentProjectId(id);
+    this.clearHistory();
     this.setState({
       poly: null, ops: null, roomH: 2500, floor, wall,
       projectId: id, projectName: name,
@@ -733,6 +786,7 @@ class Component extends DCLogic {
       list.push(Object.assign({ id, name, savedAt: Date.now(), version: PROJECT_SAVE_VERSION }, res.data));
       saveProjectList(list);
       setCurrentProjectId(id);
+      this.clearHistory();
       this.setState(Object.assign({
         projectId: id, projectName: name,
         projectModalOpen: false, menu: null, hover: null, sel: { kind: 'wall', i: 0 }
@@ -803,6 +857,7 @@ class Component extends DCLogic {
 
   set(group, key, e) {
     const v = Math.max(1, Math.min(3000, parseInt(e.target.value, 10) || 1));
+    this.pushHistory();
     this.setState((s) => ({ [group]: Object.assign({}, s[group], { [key]: v }) }));
   }
 
@@ -875,6 +930,7 @@ class Component extends DCLogic {
     if (e.button === 2) return;
     e.preventDefault();
     e.stopPropagation();
+    this.pushHistory();
     this.setState({ menu: null });
     const move = (ev) => {
       const p = this.toUser(ev);
@@ -935,6 +991,7 @@ class Component extends DCLogic {
     if (e.button === 2) return;
     e.preventDefault();
     e.stopPropagation();
+    this.pushHistory();
     this.setState({ menu: null, sel: { kind: 'wall', i: edge } });
     const basePoly = this.poly().map((p) => p.slice());
     const n = basePoly.length;
@@ -996,6 +1053,7 @@ class Component extends DCLogic {
     e.preventDefault();
     e.stopPropagation();
     const op = this.ops()[index];
+    this.pushHistory();
     this.setState({ menu: null, sel: { kind: 'op', i: index } });
     const poly = this.poly();
     const n = poly.length;
@@ -1028,6 +1086,7 @@ class Component extends DCLogic {
     const a = poly[edge], b = poly[(edge + 1) % n];
     const cur = Math.hypot(b[0] - a[0], b[1] - a[1]);
     if (cur < 1) return;
+    this.pushHistory();
     const L = Math.max(300, this.wallMinLen(edge), Math.min(12000, Math.round(len / 25) * 25));
     const ux = (b[0] - a[0]) / cur, uy = (b[1] - a[1]) / cur;
     const d = L - cur;
@@ -1057,6 +1116,7 @@ class Component extends DCLogic {
       ? { w: Math.min(900, len - 200), h: Math.min(2100, this.state.roomH - 100), sill: 0, id: 'Д' + nOfKind }
       : { w: Math.min(1200, len - 200), h: 1400, sill: 900, id: 'О' + nOfKind };
     if (spec.w < 300) return this.setState({ menu: null });
+    this.pushHistory();
     ops.push({
       kind, wall: edge, id: spec.id, w: spec.w, h: spec.h, sill: spec.sill,
       off: Math.max(100, Math.round((len - spec.w) / 2 / 25) * 25)
@@ -1065,6 +1125,7 @@ class Component extends DCLogic {
   }
 
   removeOp(index) {
+    this.pushHistory();
     const ops = this.ops().filter((_, i) => i !== index);
     this.setState({ ops, poly: this.poly(), menu: null, sel: { kind: 'wall', i: 0 } });
   }
@@ -1073,6 +1134,7 @@ class Component extends DCLogic {
   // on the wall's own segment to where the menu was opened — works the
   // same whether that wall is axis-aligned or at an angle.
   addNode(i, ux, uy) {
+    this.pushHistory();
     const poly = this.poly().map((p) => p.slice());
     const a = poly[i], b = poly[(i + 1) % poly.length];
     const dx = b[0] - a[0], dy = b[1] - a[1];
@@ -1091,6 +1153,7 @@ class Component extends DCLogic {
   removeNode(i) {
     const poly = this.poly();
     if (poly.length <= 3) return this.setState({ menu: null });
+    this.pushHistory();
     this.setState({
       poly: poly.filter((_, k) => k !== i),
       ops: this.shiftOps(i + 1, -1).filter((o) => o.wall >= 0),
@@ -1099,6 +1162,7 @@ class Component extends DCLogic {
   }
 
   resetOutline() {
+    this.pushHistory();
     this.setState({ poly: null, ops: null, menu: null, sel: { kind: 'wall', i: 0 } });
   }
 
@@ -1514,14 +1578,14 @@ class Component extends DCLogic {
         title: (selOp.kind === 'door' ? (en ? 'Door ' : 'Дверь ') : (en ? 'Window ' : 'Окно ')) + selOp.id,
         w: selOp.w, h: selOp.h, sill: selOp.sill, off: selOp.off, offEnd,
         wallName: wallOf ? wallOf.n : '—',
-        onW: (e) => this.setOp(selOpIndex, 'w', num(e, 200, 4000)),
-        onH: (e) => this.setOp(selOpIndex, 'h', num(e, 200, s.roomH - 50)),
-        onSill: (e) => this.setOp(selOpIndex, 'sill', num(e, 0, s.roomH - 300)),
-        onOff: (e) => this.setOp(selOpIndex, 'off', num(e, 0, wallLen)),
+        onW: (e) => { this.pushHistory(); this.setOp(selOpIndex, 'w', num(e, 200, 4000)); },
+        onH: (e) => { this.pushHistory(); this.setOp(selOpIndex, 'h', num(e, 200, s.roomH - 50)); },
+        onSill: (e) => { this.pushHistory(); this.setOp(selOpIndex, 'sill', num(e, 0, s.roomH - 300)); },
+        onOff: (e) => { this.pushHistory(); this.setOp(selOpIndex, 'off', num(e, 0, wallLen)); },
         // The two distances are two views of the same offset — editing
         // "to the far end" just solves off = wallLen - offEnd - width and
         // writes that back, so the other field updates on next render.
-        onOffEnd: (e) => this.setOp(selOpIndex, 'off', Math.max(0, wallLen - num(e, 0, wallLen) - selOp.w)),
+        onOffEnd: (e) => { this.pushHistory(); this.setOp(selOpIndex, 'off', Math.max(0, wallLen - num(e, 0, wallLen) - selOp.w)); },
         // Keying each field to `<opIndex>-<committedValue>` remounts the
         // (uncontrolled) input only when the committed value actually
         // changes — not on every keystroke — so typing isn't fought by
@@ -1803,7 +1867,7 @@ class Component extends DCLogic {
         : 'display:none;',
 
       roomH: s.roomH, roomHKey: 'roomH-' + s.roomH,
-      onRoomH: (e) => this.setState({ roomH: Math.max(1200, Math.min(4500, parseInt(e.target.value, 10) || 2500)) }),
+      onRoomH: (e) => { this.pushHistory(); this.setState({ roomH: Math.max(1200, Math.min(4500, parseInt(e.target.value, 10) || 2500)) }); },
 
       floorW: s.floor.w, floorH: s.floor.h, floorT: s.floor.t, floorJ: s.floor.j, floorType: s.floor.type,
       wallW: s.wall.w, wallH: s.wall.h, wallT: s.wall.t, wallJ: s.wall.j, wallType: s.wall.type,
@@ -1815,8 +1879,8 @@ class Component extends DCLogic {
       onFloorT: (e) => this.set('floor', 't', e), onFloorJ: (e) => this.set('floor', 'j', e),
       onWallW: (e) => this.set('wall', 'w', e), onWallH: (e) => this.set('wall', 'h', e),
       onWallT: (e) => this.set('wall', 't', e), onWallJ: (e) => this.set('wall', 'j', e),
-      onFloorType: (e) => this.setState((st) => ({ floor: Object.assign({}, st.floor, { type: e.target.value }) })),
-      onWallType: (e) => this.setState((st) => ({ wall: Object.assign({}, st.wall, { type: e.target.value }) })),
+      onFloorType: (e) => { this.pushHistory(); this.setState((st) => ({ floor: Object.assign({}, st.floor, { type: e.target.value }) })); },
+      onWallType: (e) => { this.pushHistory(); this.setState((st) => ({ wall: Object.assign({}, st.wall, { type: e.target.value }) })); },
 
       floorSheet: {
         spec: s.floor.w + '×' + s.floor.h + '×' + s.floor.t + ' · ' + (en ? 'joint ' : 'шов ') + s.floor.j,
