@@ -354,14 +354,14 @@
 
 <sc-if value="{{ projectModalOpen }}" hint-placeholder-val="{{ false }}">
   <div data-noprint="1" onClick="{{ closeProjectModal }}" style="position: fixed; inset: 0; background: color-mix(in srgb, black 45%, transparent); z-index: 60; display: flex; align-items: center; justify-content: center; padding: var(--space-6);">
-    <div onClick="{{ stopProjectModalClick }}" style="background: var(--color-surface); border: 1px solid var(--c-line); border-radius: var(--radius-md); width: 480px; max-width: 100%; max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow-md);">
-      <div style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-6) var(--space-6) var(--space-5); border-bottom: 1px solid var(--color-divider);">
+    <div onClick="{{ stopProjectModalClick }}" style="background: var(--color-surface); border: 1px solid var(--c-line); border-radius: var(--radius-md); width: 480px; max-width: 100%; max-height: 80vh; padding: var(--space-6); display: flex; flex-direction: column; gap: var(--space-4); overflow: hidden; box-shadow: var(--shadow-md);">
+      <div style="display: flex; align-items: center; gap: var(--space-3);">
         <span data-en="Projects" style="font-family: var(--font-heading); font-weight: 500; font-size: 15px;">Проекты</span>
         <button type="button" onClick="{{ closeProjectModal }}" style="margin-left: auto; display: grid; place-items: center; width: 28px; height: 28px; background: transparent; color: var(--c-muted); border: 0; border-radius: var(--radius-sm); font: inherit; font-size: 16px; cursor: pointer;" style-hover="background: color-mix(in srgb, var(--color-accent) 14%, transparent); color: var(--color-accent);">
           <i class="ph ph-x"></i>
         </button>
       </div>
-      <div style="display: flex; flex-wrap: wrap; gap: var(--space-3); padding: var(--space-5) var(--space-6); border-bottom: 1px solid var(--color-divider);">
+      <div style="display: flex; flex-wrap: wrap; gap: var(--space-3);">
         <input id="newProjectNameInput" type="text" placeholder="Название проекта" onKeyDown="{{ onNewProjectNameKey }}" style="flex: 1; min-width: 140px; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 7px 10px; font: inherit; font-size: 12px;">
         <button type="button" onClick="{{ createProjectFromInput }}" style="display: inline-flex; align-items: center; gap: 6px; background: transparent; color: var(--color-accent); border: 1px solid var(--color-accent); border-radius: var(--radius-sm); padding: 7px 12px; font: inherit; font-size: 12px; cursor: pointer; white-space: nowrap;" style-hover="background: color-mix(in srgb, var(--color-accent) 14%, transparent);">
           <i class="ph ph-plus" style="font-size: 14px;"></i>
@@ -373,9 +373,9 @@
         </button>
         <input id="importProjectInput" type="file" accept="application/json,.json" onChange="{{ onImportFile }}" style="display: none;">
       </div>
-      <div style="overflow-y: auto; padding: var(--space-4) var(--space-4) var(--space-6);">
+      <div style="overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin: 0 calc(-1 * var(--space-2)); padding: 2px var(--space-2);">
         <sc-for list="{{ projectList }}" as="p" hint-placeholder-count="3">
-          <div style="display: flex; align-items: center; gap: var(--space-2); background: {{ p.bg }}; border-radius: var(--radius-sm); margin-bottom: 6px;">
+          <div style="display: flex; align-items: center; gap: var(--space-2); background: {{ p.bg }}; border-radius: var(--radius-sm);">
             <button type="button" onClick="{{ p.open }}" style="display: flex; align-items: center; gap: var(--space-3); flex: 1; min-width: 0; box-sizing: border-box; text-align: left; background: transparent; color: var(--color-text); border: 0; border-radius: var(--radius-sm); padding: 12px 14px; font: inherit; font-size: 13px; cursor: pointer;" style-hover="background: color-mix(in srgb, var(--color-accent) 12%, transparent);">
               <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ p.name }}</span>
               <span style="font-size: 11px; color: var(--c-muted); white-space: nowrap;">{{ p.date }}</span>
@@ -1123,9 +1123,11 @@ class Component extends DCLogic {
   // Both ends of the wall move — by half the length change each, symmetric
   // about the wall's own midpoint, so stretching a wall 10mm longer grows
   // it 5mm at each corner instead of dumping the whole 10mm onto one end.
-  // Each moved corner is still shared with exactly one neighboring wall,
-  // which pivots at its own fixed far corner; nothing beyond those two
-  // immediate neighbors moves.
+  // (An odd change can't split into two equal whole millimetres — one end
+  // just moves 1mm further than the other so the total still lands exactly
+  // on the requested length.) Each moved corner is still shared with
+  // exactly one neighboring wall, which pivots at its own fixed far
+  // corner; nothing beyond those two immediate neighbors moves.
   setWallLength(edge, len) {
     const poly0 = this.poly();
     const n = poly0.length;
@@ -1144,7 +1146,10 @@ class Component extends DCLogic {
       return Math.hypot(ax - prevAnchor[0], ay - prevAnchor[1]) >= minPrev &&
         Math.hypot(bx - nextAnchor[0], by - nextAnchor[1]) >= minNext;
     };
-    let L = Math.max(300, this.wallMinLen(edge), Math.min(12000, Math.round(len / 25) * 25));
+    // `len` is already a whole-mm integer (parsed from the input) — no grid
+    // snapping here, or a small requested change (a few mm) would round
+    // right back to the wall's current length and silently do nothing.
+    let L = Math.max(300, this.wallMinLen(edge), Math.min(12000, len));
     if (!validLen(L)) {
       // The current length is always valid by definition — binary-search
       // from there toward the requested one for the furthest point that
@@ -1157,9 +1162,15 @@ class Component extends DCLogic {
       }
       L = lo;
     }
+    // Split the change in whole millimetres, not by rounding each new
+    // endpoint independently — an odd change can't divide into two equal
+    // integer halves, so one end simply moves 1mm further than the other,
+    // landing the wall on exactly the requested length either way.
+    const delta = Math.round(L - cur);
+    const d0 = Math.floor(delta / 2), d1 = delta - d0;
     const poly = poly0.map((p) => p.slice());
-    poly[edge] = [Math.round(cx - ux * L / 2), Math.round(cy - uy * L / 2)];
-    poly[bi] = [Math.round(cx + ux * L / 2), Math.round(cy + uy * L / 2)];
+    poly[edge] = [Math.round(a0[0] - ux * d0), Math.round(a0[1] - uy * d0)];
+    poly[bi] = [Math.round(b0[0] + ux * d1), Math.round(b0[1] + uy * d1)];
     this.setState({ poly, ops: this.ops() });
   }
 
