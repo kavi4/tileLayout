@@ -394,7 +394,7 @@
 </sc-if>
 
 <sc-if value="{{ dimHoverOpen }}" hint-placeholder-val="{{ false }}">
-  <div data-noprint="1" style="{{ dimHoverStyle }}">{{ dimHoverText }}</div>
+  <div data-noprint="1" style="{{ dimHoverStyle }}">{{ dimHoverSvg }}</div>
 </sc-if>
 
 </x-dc>
@@ -459,6 +459,22 @@ function rectPts(x, y, w, h) {
 const PROJECTS_KEY = 'tileLayoutProjects';
 const CURRENT_PROJECT_KEY = 'tileLayoutCurrentProjectId';
 const DEFAULT_PROJECT_NAME = 'Санузел · проект 04';
+
+// Editor-wide preferences (theme, language) — global to the tool, not tied
+// to any one project, so they live under their own key rather than in a
+// project snapshot.
+const EDITOR_PREFS_KEY = 'tileLayoutEditorPrefs';
+
+function loadEditorPrefs() {
+  try {
+    const p = JSON.parse(localStorage.getItem(EDITOR_PREFS_KEY) || '{}');
+    return (p && typeof p === 'object') ? p : {};
+  } catch (e) { return {}; }
+}
+
+function saveEditorPrefs(prefs) {
+  try { localStorage.setItem(EDITOR_PREFS_KEY, JSON.stringify(prefs)); } catch (e) {}
+}
 // Bumped whenever the saved-project shape changes. Stamped on every export
 // and every autosave, so an imported .json can be checked against it before
 // its data is trusted.
@@ -525,9 +541,14 @@ class Component extends DCLogic {
   // componentDidMount) specifically so the first paint already shows it —
   // no flash of the blank default room before it swaps in.
   state = (() => {
+    // Same synchronous-read reasoning as the project below — apply the
+    // saved theme before first paint instead of flashing the default and
+    // correcting it after mount.
+    const prefs = loadEditorPrefs();
+    if (prefs.theme) document.documentElement.dataset.theme = prefs.theme;
     const base = {
-      theme: 'light',
-      lang: 'ru',
+      theme: prefs.theme || 'light',
+      lang: prefs.lang || 'ru',
       poly: null,
       ops: null,
       roomH: 2500,
@@ -550,9 +571,20 @@ class Component extends DCLogic {
   })();
 
   componentDidMount() {
-    const t = this.props.defaultTheme || 'light';
-    document.documentElement.dataset.theme = t;
-    this.setState({ theme: t });
+    // Only fall back to the embed's configured default when nothing was
+    // saved yet — a returning visitor's own choice (read synchronously
+    // above, into state already) takes precedence over it.
+    if (!loadEditorPrefs().theme) {
+      const t = this.props.defaultTheme || 'light';
+      document.documentElement.dataset.theme = t;
+      this.setState({ theme: t });
+      saveEditorPrefs({ theme: t, lang: this.state.lang });
+    }
+    // A saved 'en' preference is already in state from the synchronous read
+    // above, but the DOM text itself only gets translated lazily (usually
+    // via componentDidUpdate) — apply it explicitly here too so it isn't
+    // left showing Russian until something else happens to trigger it.
+    if (this.state.lang === 'en') this.applyLang('en');
     // Nothing was in storage yet (first-ever visit) — register whatever
     // the page opened with (the default room) as project one, so there's
     // always a current project to autosave into from here on.
@@ -833,12 +865,14 @@ class Component extends DCLogic {
   setLang(lang) {
     this.applyLang(lang);
     this.setState({ lang });
+    saveEditorPrefs({ theme: this.state.theme, lang });
   }
 
   toggleTheme = () => {
     const t = this.state.theme === 'light' ? 'dark' : 'light';
     document.documentElement.dataset.theme = t;
     this.setState({ theme: t });
+    saveEditorPrefs({ theme: t, lang: this.state.lang });
   };
 
   // Inputs commit their value on blur (or Enter, which just blurs the
@@ -854,11 +888,11 @@ class Component extends DCLogic {
   setHover = (surface, id) => this.setState({ hover: { surface, id } });
   clearHover = () => this.setState({ hover: null });
 
-  // Instant (no OS hover delay) size tooltip for any tile in block 4 — set
-  // once on enter from the hovered piece's own screen rect, not tracked on
-  // every mousemove, since a full re-render (retiling every wall) is too
-  // heavy to run at pointer-move frequency.
-  setDimHover = (text, rect) => this.setState({ dimHover: { text, x: rect.left + rect.width / 2, y: rect.top } });
+  // Instant (no OS hover delay) enlarged-tile popup for any piece in block
+  // 4 — set once on enter from the hovered piece's own polygon and screen
+  // rect, not tracked on every mousemove, since a full re-render (retiling
+  // every wall) is too heavy to run at pointer-move frequency.
+  setDimHover = (poly, rect) => this.setState({ dimHover: { poly, x: rect.left + rect.width / 2, y: rect.top } });
   clearDimHover = () => this.setState({ dimHover: null });
 
   set(group, key, e) {
@@ -1086,33 +1120,36 @@ class Component extends DCLogic {
     window.addEventListener('pointerup', up);
   };
 
-  // Only the corner shared with the next wall moves — the wall being
-  // edited changes length, its immediate neighbor pivots at that shared
-  // corner (as it must, since they share a point), and nothing beyond that
-  // is touched. The previous version also shifted the corner *after* that
-  // one by the same delta to keep the immediate neighbor's own length
-  // fixed, which silently pushed the length change one wall further down
-  // the chain instead of containing it.
+  // Both ends of the wall move — by half the length change each, symmetric
+  // about the wall's own midpoint, so stretching a wall 10mm longer grows
+  // it 5mm at each corner instead of dumping the whole 10mm onto one end.
+  // Each moved corner is still shared with exactly one neighboring wall,
+  // which pivots at its own fixed far corner; nothing beyond those two
+  // immediate neighbors moves.
   setWallLength(edge, len) {
     const poly0 = this.poly();
     const n = poly0.length;
-    const a = poly0[edge], b0 = poly0[(edge + 1) % n];
-    const cur = Math.hypot(b0[0] - a[0], b0[1] - a[1]);
+    const a0 = poly0[edge], b0 = poly0[(edge + 1) % n];
+    const cur = Math.hypot(b0[0] - a0[0], b0[1] - a0[1]);
     if (cur < 1) return;
     this.pushHistory();
-    const bi = (edge + 1) % n, ci = (edge + 2) % n;
-    const c = poly0[ci];
-    const ux = (b0[0] - a[0]) / cur, uy = (b0[1] - a[1]) / cur;
-    const minNext = this.wallMinLen(bi);
+    const prevI = (edge - 1 + n) % n, bi = (edge + 1) % n, ci = (edge + 2) % n;
+    const prevAnchor = poly0[prevI], nextAnchor = poly0[ci];
+    const ux = (b0[0] - a0[0]) / cur, uy = (b0[1] - a0[1]) / cur;
+    const cx = (a0[0] + b0[0]) / 2, cy = (a0[1] + b0[1]) / 2;
+    const minPrev = this.wallMinLen(prevI), minNext = this.wallMinLen(bi);
     const validLen = (L) => {
-      const bx = a[0] + ux * L, by = a[1] + uy * L;
-      return Math.hypot(c[0] - bx, c[1] - by) >= minNext;
+      const ax = cx - ux * L / 2, ay = cy - uy * L / 2;
+      const bx = cx + ux * L / 2, by = cy + uy * L / 2;
+      return Math.hypot(ax - prevAnchor[0], ay - prevAnchor[1]) >= minPrev &&
+        Math.hypot(bx - nextAnchor[0], by - nextAnchor[1]) >= minNext;
     };
     let L = Math.max(300, this.wallMinLen(edge), Math.min(12000, Math.round(len / 25) * 25));
     if (!validLen(L)) {
       // The current length is always valid by definition — binary-search
       // from there toward the requested one for the furthest point that
-      // still leaves the neighboring wall long enough for its own opening.
+      // still leaves both neighboring walls long enough for their own
+      // openings.
       let lo = cur, hi = L;
       for (let k = 0; k < 20; k++) {
         const mid = (lo + hi) / 2;
@@ -1121,7 +1158,8 @@ class Component extends DCLogic {
       L = lo;
     }
     const poly = poly0.map((p) => p.slice());
-    poly[bi] = [Math.round(a[0] + ux * L), Math.round(a[1] + uy * L)];
+    poly[edge] = [Math.round(cx - ux * L / 2), Math.round(cy - uy * L / 2)];
+    poly[bi] = [Math.round(cx + ux * L / 2), Math.round(cy + uy * L / 2)];
     this.setState({ poly, ops: this.ops() });
   }
 
@@ -1470,13 +1508,45 @@ class Component extends DCLogic {
     };
   }
 
-  // Bounding-box size of one tile piece's actual polygon — used for the
-  // hover tooltip in the cut sheets, so a piece clipped by an angled wall or
-  // an opening still reports its true installed footprint, not the nominal
-  // grid-cell size.
+  // Bounding-box size of one tile piece's actual polygon — a piece clipped
+  // by an angled wall or an opening still reports its true installed
+  // footprint this way, not the nominal grid-cell size.
   polyBBox(poly) {
     const xs = poly.map((p) => p[0]), ys = poly.map((p) => p[1]);
     return { w: Math.max.apply(null, xs) - Math.min.apply(null, xs), h: Math.max.apply(null, ys) - Math.min.apply(null, ys) };
+  }
+
+  // Self-contained magnified drawing of one hovered tile piece, for the
+  // popup in block 4 — its own dimension lines (sized off the piece itself,
+  // not the room-scale constants `dimEls` uses) so a tiny offcut and a
+  // near-full tile both render with legible, proportionate labels.
+  tileDimSvg(poly) {
+    const E = React.createElement;
+    const xs = poly.map((p) => p[0]), ys = poly.map((p) => p[1]);
+    const x0 = Math.min.apply(null, xs), y0 = Math.min.apply(null, ys);
+    const w = Math.max.apply(null, xs) - x0, h = Math.max.apply(null, ys) - y0;
+    const pts = poly.map((p) => Math.round(p[0] - x0) + ',' + Math.round(p[1] - y0)).join(' ');
+    const span = Math.max(w, h, 1);
+    const pad = Math.max(50, span * 0.22);
+    const fs = Math.max(26, span * 0.085);
+    const tick = fs * 0.55;
+    const dimLine = (x1, y1, x2, y2) => E('line', { x1, y1, x2, y2, stroke: 'var(--c-muted)', strokeWidth: Math.max(2, fs * 0.09) });
+    const label = (x, y, anchor, t) => E('text', { x, y, fontSize: fs, fill: 'var(--color-text)', textAnchor: anchor }, t);
+    return E('svg', {
+      viewBox: [-pad * 1.6, -pad * 1.6, w + pad * 3.6, h + pad * 3.6].join(' '),
+      preserveAspectRatio: 'xMidYMid meet',
+      style: { width: '100%', height: '100%', display: 'block', overflow: 'visible' }
+    },
+      E('polygon', { points: pts, fill: 'var(--c-tile-cut)', stroke: 'var(--c-tile-line)', strokeWidth: Math.max(2, fs * 0.07) }),
+      dimLine(0, h + pad, w, h + pad),
+      dimLine(0, h + pad - tick, 0, h + pad + tick),
+      dimLine(w, h + pad - tick, w, h + pad + tick),
+      label(w / 2, h + pad * 1.85, 'middle', Math.round(w) + ' мм'),
+      dimLine(w + pad, 0, w + pad, h),
+      dimLine(w + pad - tick, 0, w + pad + tick, 0),
+      dimLine(w + pad - tick, h, w + pad + tick, h),
+      label(w + pad * 1.2, h / 2 + fs * 0.35, 'start', Math.round(h) + ' мм')
+    );
   }
 
   dimEls(dims, key) {
@@ -1704,10 +1774,8 @@ class Component extends DCLogic {
       const hoverable = t.id != null && reusedFloorIds.has(t.id);
       const fill = t.full ? 'var(--c-tile)' : 'var(--c-tile-cut)';
       t.polys.forEach((p) => {
-        const bb2 = this.polyBBox(p);
         fTiles.push({
-          pts: p.map((q) => Math.round(q[0]) + ',' + Math.round(q[1])).join(' '), fill, id: t.id, hoverable,
-          dim: Math.round(bb2.w) + '×' + Math.round(bb2.h)
+          pts: p.map((q) => Math.round(q[0]) + ',' + Math.round(q[1])).join(' '), fill, id: t.id, hoverable, poly: p
         });
       });
       if (hoverable) {
@@ -1730,7 +1798,7 @@ class Component extends DCLogic {
         fill: t.hoverable && t.id === floorHover ? 'var(--color-accent)' : t.fill,
         stroke: 'var(--c-tile-line)', strokeWidth: 8,
         style: t.hoverable ? { cursor: 'pointer' } : undefined,
-        onMouseEnter: (e) => { if (t.hoverable) this.setHover('floor', t.id); this.setDimHover(t.dim, e.currentTarget.getBoundingClientRect()); },
+        onMouseEnter: (e) => { if (t.hoverable) this.setHover('floor', t.id); this.setDimHover(t.poly, e.currentTarget.getBoundingClientRect()); },
         onMouseLeave: () => { if (t.hoverable) this.clearHover(); this.clearDimHover(); }
       })),
       E('polygon', { key: 'outline', points: pts, fill: 'none', stroke: 'var(--color-text)', strokeWidth: 22 }),
@@ -1771,11 +1839,12 @@ class Component extends DCLogic {
       tiles.forEach((t) => {
         const hoverable = t.id != null && reusedWallIds.has(t.id);
         t.polys.forEach((p) => {
-          const bb2 = this.polyBBox(p);
+          // Flipped to match the on-screen orientation (`pts` below) so the
+          // hover popup shows the piece the same way up as the sheet does.
+          const flipped = p.map((q) => [q[0], H - q[1]]);
           shapes.push({
-            pts: p.map((q) => Math.round(q[0]) + ',' + Math.round(H - q[1])).join(' '),
-            fill: t.full ? 'var(--c-tile)' : 'var(--c-tile-cut)', id: t.id, hoverable,
-            dim: Math.round(bb2.w) + '×' + Math.round(bb2.h)
+            pts: flipped.map((q) => Math.round(q[0]) + ',' + Math.round(q[1])).join(' '),
+            fill: t.full ? 'var(--c-tile)' : 'var(--c-tile-cut)', id: t.id, hoverable, poly: flipped
           });
         });
         if (hoverable) {
@@ -1813,7 +1882,7 @@ class Component extends DCLogic {
           fill: t.hoverable && t.id === wallHover ? 'var(--color-accent)' : t.fill,
           stroke: 'var(--c-tile-line)', strokeWidth: 8,
           style: t.hoverable ? { cursor: 'pointer' } : undefined,
-          onMouseEnter: (e) => { if (t.hoverable) this.setHover('wall', t.id); this.setDimHover(t.dim, e.currentTarget.getBoundingClientRect()); },
+          onMouseEnter: (e) => { if (t.hoverable) this.setHover('wall', t.id); this.setDimHover(t.poly, e.currentTarget.getBoundingClientRect()); },
           onMouseLeave: () => { if (t.hoverable) this.clearHover(); this.clearDimHover(); }
         })),
         wNums.map((n, i) => E('text', { key: 'wn' + i, x: n.x, y: n.y, fontSize: 80, fill: 'var(--c-muted)', textAnchor: 'middle', pointerEvents: 'none' }, n.t)),
@@ -1896,9 +1965,9 @@ class Component extends DCLogic {
         : 'display:none;',
 
       dimHoverOpen: !!s.dimHover,
-      dimHoverText: s.dimHover ? s.dimHover.text : '',
+      dimHoverSvg: s.dimHover ? this.tileDimSvg(s.dimHover.poly) : null,
       dimHoverStyle: s.dimHover
-        ? 'position:fixed;left:' + s.dimHover.x + 'px;top:' + s.dimHover.y + 'px;transform:translate(-50%,-100%) translateY(-8px);pointer-events:none;z-index:70;background:var(--color-surface);border:1px solid var(--c-line);border-radius:var(--radius-sm);padding:4px 8px;font-size:11px;color:var(--color-text);box-shadow:var(--shadow-md);white-space:nowrap;'
+        ? 'position:fixed;left:' + s.dimHover.x + 'px;top:' + s.dimHover.y + 'px;transform:translate(-50%,-100%) translateY(-14px);pointer-events:none;z-index:70;width:200px;height:200px;box-sizing:border-box;background:var(--color-surface);border:1px solid var(--c-line);border-radius:var(--radius-md);padding:14px;box-shadow:var(--shadow-md);'
         : 'display:none;',
 
       roomH: s.roomH, roomHKey: 'roomH-' + s.roomH,
