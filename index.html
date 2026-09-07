@@ -247,7 +247,6 @@
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
             <label style="display: flex; flex-direction: column; gap: 3px;"><span data-en="Width, mm" style="font-size: 11px; color: var(--c-muted);">Ширина, мм</span><input type="number" disabled="{{ floorSettingsLocked }}" sc-camel-default-value="{{ floorW }}" key="{{ floorWKey }}" onBlur="{{ onFloorW }}" onKeyDown="{{ commitOnEnter }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input></label>
             <label style="display: flex; flex-direction: column; gap: 3px;"><span data-en="Height, mm" style="font-size: 11px; color: var(--c-muted);">Высота, мм</span><input type="number" disabled="{{ floorSettingsLocked }}" sc-camel-default-value="{{ floorH }}" key="{{ floorHKey }}" onBlur="{{ onFloorH }}" onKeyDown="{{ commitOnEnter }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input></label>
-            <label style="display: flex; flex-direction: column; gap: 3px;"><span data-en="Thickness, mm" style="font-size: 11px; color: var(--c-muted);">Толщина, мм</span><input type="number" disabled="{{ floorSettingsLocked }}" sc-camel-default-value="{{ floorT }}" key="{{ floorTKey }}" onBlur="{{ onFloorT }}" onKeyDown="{{ commitOnEnter }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input></label>
             <label style="display: flex; flex-direction: column; gap: 3px;"><span data-en="Joint, mm" style="font-size: 11px; color: var(--c-muted);">Шов, мм</span><input type="number" disabled="{{ floorSettingsLocked }}" sc-camel-default-value="{{ floorJ }}" key="{{ floorJKey }}" onBlur="{{ onFloorJ }}" onKeyDown="{{ commitOnEnter }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input></label>
           </div>
           <label style="display: flex; flex-direction: column; gap: 3px;">
@@ -270,7 +269,6 @@
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
             <label style="display: flex; flex-direction: column; gap: 3px;"><span data-en="Width, mm" style="font-size: 11px; color: var(--c-muted);">Ширина, мм</span><input type="number" disabled="{{ wallSettingsLocked }}" sc-camel-default-value="{{ wallW }}" key="{{ wallWKey }}" onBlur="{{ onWallW }}" onKeyDown="{{ commitOnEnter }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input></label>
             <label style="display: flex; flex-direction: column; gap: 3px;"><span data-en="Height, mm" style="font-size: 11px; color: var(--c-muted);">Высота, мм</span><input type="number" disabled="{{ wallSettingsLocked }}" sc-camel-default-value="{{ wallH }}" key="{{ wallHKey }}" onBlur="{{ onWallH }}" onKeyDown="{{ commitOnEnter }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input></label>
-            <label style="display: flex; flex-direction: column; gap: 3px;"><span data-en="Thickness, mm" style="font-size: 11px; color: var(--c-muted);">Толщина, мм</span><input type="number" disabled="{{ wallSettingsLocked }}" sc-camel-default-value="{{ wallT }}" key="{{ wallTKey }}" onBlur="{{ onWallT }}" onKeyDown="{{ commitOnEnter }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input></label>
             <label style="display: flex; flex-direction: column; gap: 3px;"><span data-en="Joint, mm" style="font-size: 11px; color: var(--c-muted);">Шов, мм</span><input type="number" disabled="{{ wallSettingsLocked }}" sc-camel-default-value="{{ wallJ }}" key="{{ wallJKey }}" onBlur="{{ onWallJ }}" onKeyDown="{{ commitOnEnter }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input></label>
           </div>
           <label style="display: flex; flex-direction: column; gap: 3px;">
@@ -495,6 +493,18 @@ function rectPts(x, y, w, h) {
   return [[x, y], [x + w, y], [x + w, y + h], [x, y + h]];
 }
 
+// True when a 4-point polygon is an axis-aligned rectangle, regardless of
+// winding or starting vertex — its area matches its own bounding box's.
+// Used to recognize when clipping a grid cell (against a room outline or an
+// opening) still left a single clean rectangle, as opposed to an L-shaped
+// notch or two disjoint pieces.
+function isAxisRectPoly(pts) {
+  if (pts.length !== 4) return false;
+  const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+  const w = Math.max(...xs) - Math.min(...xs), h = Math.max(...ys) - Math.min(...ys);
+  return Math.abs(polyArea(pts) - w * h) < 1;
+}
+
 /* ---------- project persistence (localStorage) ---------- */
 
 const PROJECTS_KEY = 'tileLayoutProjects';
@@ -604,8 +614,8 @@ class Component extends DCLogic {
       sel: { kind: 'wall', i: 0 },
       hover: null,
       dimHover: null,
-      floor: { w: 600, h: 600, t: 9, j: 2, type: 'classic' },
-      wall: { w: 600, h: 600, t: 8, j: 2, type: 'classic' },
+      floor: { w: 600, h: 600, j: 2, type: 'classic' },
+      wall: { w: 600, h: 600, j: 2, type: 'classic' },
       // Manually edited & frozen wall layouts, keyed by wall letter — see
       // `wallTiles()`. A wall with an entry here skips the automatic
       // classic/village/basic layout entirely and uses these column/row
@@ -786,8 +796,8 @@ class Component extends DCLogic {
       const id = newProjectId();
       list = [projectSnapshot(id, DEFAULT_PROJECT_NAME, {
         poly: null, ops: null, roomH: 2500,
-        floor: { w: 600, h: 600, t: 9, j: 2, type: 'classic' },
-        wall: { w: 600, h: 600, t: 8, j: 2, type: 'classic' }
+        floor: { w: 600, h: 600, j: 2, type: 'classic' },
+        wall: { w: 600, h: 600, j: 2, type: 'classic' }
       })];
     }
     saveProjectList(list);
@@ -812,8 +822,8 @@ class Component extends DCLogic {
   createProject = (rawName) => {
     const name = (rawName || '').trim() || (this.state.lang === 'en' ? 'New project' : 'Новый проект');
     const id = newProjectId();
-    const floor = { w: 600, h: 600, t: 9, j: 2, type: 'classic' };
-    const wall = { w: 600, h: 600, t: 8, j: 2, type: 'classic' };
+    const floor = { w: 600, h: 600, j: 2, type: 'classic' };
+    const wall = { w: 600, h: 600, j: 2, type: 'classic' };
     const list = loadProjectList();
     list.push({ id, name, savedAt: Date.now(), poly: null, ops: null, roomH: 2500, floor, wall });
     saveProjectList(list);
@@ -1162,9 +1172,12 @@ class Component extends DCLogic {
   // a position the stored value wouldn't actually produce.
   startOpDrag = (index, e) => {
     if (e.button === 2) return;
+    const op = this.ops()[index];
+    // Sliding an opening along a locked wall would invalidate its frozen
+    // layout, same as adding/removing one.
+    if (op && this.isWallLocked(LETTERS[op.wall] || 'W' + (op.wall + 1))) return;
     e.preventDefault();
     e.stopPropagation();
-    const op = this.ops()[index];
     this.pushHistory();
     this.setState({ menu: null, sel: { kind: 'op', i: index } });
     const poly = this.poly();
@@ -1464,21 +1477,37 @@ class Component extends DCLogic {
     const tiles = [];
     rows.forEach((row) => {
       cols.forEach((col) => {
-        const cutX = Math.abs(col.size - tile.w) > 1, cutY = Math.abs(row.size - tile.h) > 1;
         const polys = clip(col.start, row.start, col.size, row.size);
         const used = polys.reduce((a, p) => a + polyArea(p), 0);
         if (used < 500) return;
 
+        // The cell's nominal grid footprint (col.size × row.size) only
+        // shrinks at a wall/room boundary — it says nothing about an
+        // opening notching into an otherwise full-size interior cell (e.g.
+        // a door whose sill sits above the floor leaves a short strip
+        // below it, cut from a full tile). When the clip still left a
+        // single clean rectangle — the common case, whether that's from
+        // grid trimming, an opening's edge, or both — that rectangle's own
+        // size is the true material footprint, and reusing/pooling should
+        // key off it instead of the untrimmed grid size.
+        let effW = col.size, effH = row.size;
+        if (polys.length === 1 && isAxisRectPoly(polys[0])) {
+          const xs = polys[0].map((p) => p[0]), ys = polys[0].map((p) => p[1]);
+          effW = Math.max(...xs) - Math.min(...xs);
+          effH = Math.max(...ys) - Math.min(...ys);
+        }
+        const cutX = Math.abs(effW - tile.w) > 1, cutY = Math.abs(effH - tile.h) > 1;
+
         let id = null, reused = false;
         if (cutX || cutY) {
-          const got = take(col.size, row.size);
+          const got = take(effW, effH);
           if (got) {
             id = got.id;
             reused = true;
           } else {
             id = state.nextId++;
-            const optA = { w: tile.w - col.size, h: tile.h };
-            const optB = { w: tile.w, h: tile.h - row.size };
+            const optA = { w: tile.w - effW, h: tile.h };
+            const optB = { w: tile.w, h: tile.h - effH };
             const leftover = optA.w * optA.h >= optB.w * optB.h ? optA : optB;
             give(leftover.w, leftover.h, id);
           }
@@ -2390,7 +2419,7 @@ class Component extends DCLogic {
 
       return Object.assign({
         title: (en ? 'Wall ' : 'Стена ') + w.n,
-        spec: s.wall.w + '×' + s.wall.h + '×' + s.wall.t + ' · ' + (en ? 'joint ' : 'шов ') + s.wall.j,
+        spec: s.wall.w + '×' + s.wall.h + ' · ' + (en ? 'joint ' : 'шов ') + s.wall.j,
         count: tiles.length + (en ? ' pcs' : ' шт'),
         svg
       }, this.lockButtonProps('wall', w.n, w.edge, en));
@@ -2468,23 +2497,23 @@ class Component extends DCLogic {
       roomH: s.roomH, roomHKey: 'roomH-' + s.roomH,
       onRoomH: (e) => { this.pushHistory(); this.setState({ roomH: Math.max(1200, Math.min(4500, parseInt(e.target.value, 10) || 2500)) }); },
 
-      floorW: s.floor.w, floorH: s.floor.h, floorT: s.floor.t, floorJ: s.floor.j, floorType: s.floor.type,
-      wallW: s.wall.w, wallH: s.wall.h, wallT: s.wall.t, wallJ: s.wall.j, wallType: s.wall.type,
+      floorW: s.floor.w, floorH: s.floor.h, floorJ: s.floor.j, floorType: s.floor.type,
+      wallW: s.wall.w, wallH: s.wall.h, wallJ: s.wall.j, wallType: s.wall.type,
       wallSettingsLocked: this.anyWallLocked(),
       floorSettingsLocked: this.floorLocked(),
       floorWKey: 'floorW-' + s.floor.w, floorHKey: 'floorH-' + s.floor.h,
-      floorTKey: 'floorT-' + s.floor.t, floorJKey: 'floorJ-' + s.floor.j,
+      floorJKey: 'floorJ-' + s.floor.j,
       wallWKey: 'wallW-' + s.wall.w, wallHKey: 'wallH-' + s.wall.h,
-      wallTKey: 'wallT-' + s.wall.t, wallJKey: 'wallJ-' + s.wall.j,
+      wallJKey: 'wallJ-' + s.wall.j,
       onFloorW: (e) => this.set('floor', 'w', e), onFloorH: (e) => this.set('floor', 'h', e),
-      onFloorT: (e) => this.set('floor', 't', e), onFloorJ: (e) => this.set('floor', 'j', e),
+      onFloorJ: (e) => this.set('floor', 'j', e),
       onWallW: (e) => this.set('wall', 'w', e), onWallH: (e) => this.set('wall', 'h', e),
-      onWallT: (e) => this.set('wall', 't', e), onWallJ: (e) => this.set('wall', 'j', e),
+      onWallJ: (e) => this.set('wall', 'j', e),
       onFloorType: (e) => { this.pushHistory(); this.setState((st) => ({ floor: Object.assign({}, st.floor, { type: e.target.value }) })); },
       onWallType: (e) => { this.pushHistory(); this.setState((st) => ({ wall: Object.assign({}, st.wall, { type: e.target.value }) })); },
 
       floorSheet: Object.assign({
-        spec: s.floor.w + '×' + s.floor.h + '×' + s.floor.t + ' · ' + (en ? 'joint ' : 'шов ') + s.floor.j,
+        spec: s.floor.w + '×' + s.floor.h + ' · ' + (en ? 'joint ' : 'шов ') + s.floor.j,
         count: ft.length + (en ? ' pcs' : ' шт')
       }, this.lockButtonProps('floor', 'floor', undefined, en)),
       totals: {
