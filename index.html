@@ -30,8 +30,10 @@
     --c-3d-grout: var(--color-neutral-900);
     /* Kept light regardless of theme — the 3D room itself already reads
        fine in dark mode, but its grout color used to match the dark
-       background exactly, erasing all tile-edge definition. */
-    --c-3d-bg: var(--color-neutral-100);
+       background exactly, erasing all tile-edge definition. A light GRAY
+       rather than near-white, so the viewport doesn't glow as a stark
+       white box against the rest of the dark UI. */
+    --c-3d-bg: var(--color-neutral-300);
   }
   :root[data-theme="light"] {
     --color-bg: #e4e7f5;
@@ -50,6 +52,8 @@
     --c-3d-wall: var(--color-neutral-100);
     --c-3d-cut: #cdc6f2;
     --c-3d-grout: var(--color-neutral-500);
+    /* light theme keeps the original near-white 3D background */
+    --c-3d-bg: var(--color-neutral-100);
   }
   [data-print-only] { display: none; }
   a { color: var(--color-accent); }
@@ -134,7 +138,7 @@
             <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
               <div data-ctx-menu="1" style="{{ menuStyle }}">
                 <sc-for list="{{ menuItems }}" as="it" hint-placeholder-count="3">
-                  <button type="button" onClick="{{ it.act }}" style="display: block; width: 100%; text-align: left; background: transparent; color: var(--color-text); border: 0; padding: 6px 12px; font: inherit; font-size: 12px; cursor: pointer; white-space: nowrap;" style-hover="background: color-mix(in srgb, var(--color-accent) 16%, transparent); color: var(--color-accent);">{{ it.label }}</button>
+                  <button type="button" onClick="{{ it.act }}" style="{{ it.style }}" style-hover="background: color-mix(in srgb, var(--color-accent) 16%, transparent); color: var(--color-accent);">{{ it.label }}</button>
                 </sc-for>
               </div>
             </sc-if>
@@ -234,16 +238,21 @@
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: var(--space-8);">
 
         <div style="display: flex; flex-direction: column; gap: var(--space-4);">
-          <div data-en="Floor tile" style="font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--c-muted);">Плитка пола</div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <div data-en="Floor tile" style="font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--c-muted);">Плитка пола</div>
+            <sc-if value="{{ floorSettingsLocked }}" hint-placeholder-val="{{ false }}">
+              <i class="ph ph-lock" title="The floor has a manually locked layout — unlock it in block 4 to change these settings." style="color: var(--color-accent); font-size: 12px;"></i>
+            </sc-if>
+          </div>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
-            <label style="display: flex; flex-direction: column; gap: 3px;"><span data-en="Width, mm" style="font-size: 11px; color: var(--c-muted);">Ширина, мм</span><input type="number" sc-camel-default-value="{{ floorW }}" key="{{ floorWKey }}" onBlur="{{ onFloorW }}" onKeyDown="{{ commitOnEnter }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input></label>
-            <label style="display: flex; flex-direction: column; gap: 3px;"><span data-en="Height, mm" style="font-size: 11px; color: var(--c-muted);">Высота, мм</span><input type="number" sc-camel-default-value="{{ floorH }}" key="{{ floorHKey }}" onBlur="{{ onFloorH }}" onKeyDown="{{ commitOnEnter }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input></label>
-            <label style="display: flex; flex-direction: column; gap: 3px;"><span data-en="Thickness, mm" style="font-size: 11px; color: var(--c-muted);">Толщина, мм</span><input type="number" sc-camel-default-value="{{ floorT }}" key="{{ floorTKey }}" onBlur="{{ onFloorT }}" onKeyDown="{{ commitOnEnter }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input></label>
-            <label style="display: flex; flex-direction: column; gap: 3px;"><span data-en="Joint, mm" style="font-size: 11px; color: var(--c-muted);">Шов, мм</span><input type="number" sc-camel-default-value="{{ floorJ }}" key="{{ floorJKey }}" onBlur="{{ onFloorJ }}" onKeyDown="{{ commitOnEnter }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input></label>
+            <label style="display: flex; flex-direction: column; gap: 3px;"><span data-en="Width, mm" style="font-size: 11px; color: var(--c-muted);">Ширина, мм</span><input type="number" disabled="{{ floorSettingsLocked }}" sc-camel-default-value="{{ floorW }}" key="{{ floorWKey }}" onBlur="{{ onFloorW }}" onKeyDown="{{ commitOnEnter }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input></label>
+            <label style="display: flex; flex-direction: column; gap: 3px;"><span data-en="Height, mm" style="font-size: 11px; color: var(--c-muted);">Высота, мм</span><input type="number" disabled="{{ floorSettingsLocked }}" sc-camel-default-value="{{ floorH }}" key="{{ floorHKey }}" onBlur="{{ onFloorH }}" onKeyDown="{{ commitOnEnter }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input></label>
+            <label style="display: flex; flex-direction: column; gap: 3px;"><span data-en="Thickness, mm" style="font-size: 11px; color: var(--c-muted);">Толщина, мм</span><input type="number" disabled="{{ floorSettingsLocked }}" sc-camel-default-value="{{ floorT }}" key="{{ floorTKey }}" onBlur="{{ onFloorT }}" onKeyDown="{{ commitOnEnter }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input></label>
+            <label style="display: flex; flex-direction: column; gap: 3px;"><span data-en="Joint, mm" style="font-size: 11px; color: var(--c-muted);">Шов, мм</span><input type="number" disabled="{{ floorSettingsLocked }}" sc-camel-default-value="{{ floorJ }}" key="{{ floorJKey }}" onBlur="{{ onFloorJ }}" onKeyDown="{{ commitOnEnter }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;"></input></label>
           </div>
           <label style="display: flex; flex-direction: column; gap: 3px;">
             <span data-en="Layout" style="font-size: 11px; color: var(--c-muted);">Тип раскладки</span>
-            <select value="{{ floorType }}" onChange="{{ onFloorType }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;">
+            <select value="{{ floorType }}" disabled="{{ floorSettingsLocked }}" onChange="{{ onFloorType }}" style="width: 100%; box-sizing: border-box; background: var(--c-input); color: var(--color-text); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; font-size: 12px;">
               <option value="classic" data-en="Classic">Классическая</option>
               <option value="basic" data-en="Basic">Убогая</option>
               <option value="village" data-en="Rustic">Деревенская</option>
@@ -347,10 +356,16 @@
           <div style="display: block; min-width: 0;">{{ planSvg }}</div>
         </div>
         <div data-sheet="1" style="display: flex; flex-direction: column; gap: var(--space-3); background: var(--c-paper); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: var(--space-6);">
-          <div style="display: flex; align-items: baseline; gap: var(--space-3); border-bottom: 1px solid var(--color-divider); padding-bottom: var(--space-2);">
+          <div style="display: flex; align-items: center; gap: var(--space-3); border-bottom: 1px solid var(--color-divider); padding-bottom: var(--space-2);">
             <span data-en="Floor" style="font-family: var(--font-heading); font-size: 13px;">Пол</span>
             <span style="font-size: 11px; color: var(--c-muted);">{{ floorSheet.spec }}</span>
             <span style="margin-left: auto; font-size: 11px; color: var(--color-accent);">{{ floorSheet.count }}</span>
+            <button type="button" data-noprint="1" onClick="{{ floorSheet.onEdit }}" title="Edit layout" style="display: grid; place-items: center; width: 26px; height: 26px; background: transparent; color: var(--c-muted); border: 0; border-radius: var(--radius-sm); font-size: 14px; cursor: pointer;" style-hover="background: color-mix(in srgb, var(--color-accent) 14%, transparent); color: var(--color-accent);">
+              <i class="ph ph-pencil-simple"></i>
+            </button>
+            <button type="button" data-noprint="1" onClick="{{ floorSheet.onToggleLock }}" title="{{ floorSheet.lockTitle }}" style="display: grid; place-items: center; width: 26px; height: 26px; background: {{ floorSheet.lockBg }}; color: {{ floorSheet.lockColor }}; border: 0; border-radius: var(--radius-sm); font-size: 14px; cursor: pointer;" style-hover="background: color-mix(in srgb, var(--color-accent) 26%, transparent); color: var(--color-accent);">
+              <i class="ph {{ floorSheet.lockIcon }}"></i>
+            </button>
           </div>
           <div style="display: block; min-width: 0;">{{ floorSvg }}</div>
         </div>
@@ -364,7 +379,7 @@
               <button type="button" data-noprint="1" onClick="{{ s.onEdit }}" title="Edit layout" style="display: grid; place-items: center; width: 26px; height: 26px; background: transparent; color: var(--c-muted); border: 0; border-radius: var(--radius-sm); font-size: 14px; cursor: pointer;" style-hover="background: color-mix(in srgb, var(--color-accent) 14%, transparent); color: var(--color-accent);">
                 <i class="ph ph-pencil-simple"></i>
               </button>
-              <button type="button" data-noprint="1" onClick="{{ s.onToggleLock }}" title="{{ s.lockTitle }}" style="display: grid; place-items: center; width: 26px; height: 26px; background: transparent; color: {{ s.lockColor }}; border: 0; border-radius: var(--radius-sm); font-size: 14px; cursor: pointer;" style-hover="background: color-mix(in srgb, var(--color-accent) 14%, transparent); color: var(--color-accent);">
+              <button type="button" data-noprint="1" onClick="{{ s.onToggleLock }}" title="{{ s.lockTitle }}" style="display: grid; place-items: center; width: 26px; height: 26px; background: {{ s.lockBg }}; color: {{ s.lockColor }}; border: 0; border-radius: var(--radius-sm); font-size: 14px; cursor: pointer;" style-hover="background: color-mix(in srgb, var(--color-accent) 26%, transparent); color: var(--color-accent);">
                 <i class="ph {{ s.lockIcon }}"></i>
               </button>
             </div>
@@ -421,7 +436,7 @@
   <div data-noprint="1" style="{{ dimHoverStyle }}">{{ dimHoverSvg }}</div>
 </sc-if>
 
-<div data-noprint="1">{{ wallEditorEl }}</div>
+<div data-noprint="1">{{ layoutEditorEl }}</div>
 
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;defaultTheme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;'light'|'dark'&quot;},&quot;roomPreset&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;l&quot;,&quot;rect&quot;],&quot;default&quot;:&quot;l&quot;,&quot;tsType&quot;:&quot;'l'|'rect'&quot;}}">
@@ -524,7 +539,8 @@ function normalizeProjectData(raw) {
   if (!okShape) return { ok: false, reason: 'shape' };
   // Added after v1 shipped — optional, so older saves without it still load.
   const wallLocks = (raw.wallLocks && typeof raw.wallLocks === 'object') ? raw.wallLocks : {};
-  return { ok: true, data: { poly: raw.poly, ops: raw.ops, roomH: raw.roomH, floor: raw.floor, wall: raw.wall, wallLocks } };
+  const floorLock = (raw.floorLock && typeof raw.floorLock === 'object') ? raw.floorLock : null;
+  return { ok: true, data: { poly: raw.poly, ops: raw.ops, roomH: raw.roomH, floor: raw.floor, wall: raw.wall, wallLocks, floorLock } };
 }
 
 function loadProjectList() {
@@ -556,7 +572,7 @@ function projectSnapshot(id, name, s) {
   return {
     id, name, version: PROJECT_SAVE_VERSION, savedAt: Date.now(),
     poly: s.poly, ops: s.ops, roomH: s.roomH, floor: s.floor, wall: s.wall,
-    wallLocks: s.wallLocks || {}
+    wallLocks: s.wallLocks || {}, floorLock: s.floorLock || null
   };
 }
 
@@ -593,9 +609,11 @@ class Component extends DCLogic {
       // Manually edited & frozen wall layouts, keyed by wall letter — see
       // `wallTiles()`. A wall with an entry here skips the automatic
       // classic/village/basic layout entirely and uses these column/row
-      // sizes verbatim until unlocked.
+      // sizes verbatim until unlocked. `floorLock` is the same idea for the
+      // floor, which only ever has the one instance.
       wallLocks: {},
-      wallEditor: null,
+      floorLock: null,
+      layoutEditor: null,
       projectId: null,
       projectName: DEFAULT_PROJECT_NAME,
       projectModalOpen: false
@@ -604,7 +622,7 @@ class Component extends DCLogic {
     if (!proj) return base;
     return Object.assign({}, base, {
       poly: proj.poly, ops: proj.ops, roomH: proj.roomH, floor: proj.floor, wall: proj.wall,
-      wallLocks: proj.wallLocks || {},
+      wallLocks: proj.wallLocks || {}, floorLock: proj.floorLock || null,
       projectId: proj.id, projectName: proj.name
     });
   })();
@@ -705,7 +723,7 @@ class Component extends DCLogic {
 
   historySnapshot() {
     const s = this.state;
-    return JSON.parse(JSON.stringify({ poly: s.poly, ops: s.ops, roomH: s.roomH, floor: s.floor, wall: s.wall, wallLocks: s.wallLocks }));
+    return JSON.parse(JSON.stringify({ poly: s.poly, ops: s.ops, roomH: s.roomH, floor: s.floor, wall: s.wall, wallLocks: s.wallLocks, floorLock: s.floorLock }));
   }
 
   pushHistory() {
@@ -749,7 +767,7 @@ class Component extends DCLogic {
     this.clearHistory();
     this.setState({
       poly: proj.poly, ops: proj.ops, roomH: proj.roomH, floor: proj.floor, wall: proj.wall,
-      wallLocks: proj.wallLocks || {}, wallEditor: null,
+      wallLocks: proj.wallLocks || {}, floorLock: proj.floorLock || null, layoutEditor: null,
       projectId: proj.id, projectName: proj.name,
       projectModalOpen: false, menu: null, hover: null, sel: { kind: 'wall', i: 0 }
     });
@@ -779,7 +797,7 @@ class Component extends DCLogic {
       this.clearHistory();
       this.setState({
         poly: next.poly, ops: next.ops, roomH: next.roomH, floor: next.floor, wall: next.wall,
-        wallLocks: next.wallLocks || {}, wallEditor: null,
+        wallLocks: next.wallLocks || {}, floorLock: next.floorLock || null, layoutEditor: null,
         projectId: next.id, projectName: next.name,
         menu: null, hover: null, sel: { kind: 'wall', i: 0 }
       });
@@ -803,7 +821,7 @@ class Component extends DCLogic {
     this.clearHistory();
     this.setState({
       poly: null, ops: null, roomH: 2500, floor, wall,
-      wallLocks: {}, wallEditor: null,
+      wallLocks: {}, floorLock: null, layoutEditor: null,
       projectId: id, projectName: name,
       projectModalOpen: false, menu: null, hover: null, sel: { kind: 'wall', i: 0 }
     });
@@ -822,7 +840,7 @@ class Component extends DCLogic {
     const data = {
       version: PROJECT_SAVE_VERSION, name: proj.name,
       poly: proj.poly, ops: proj.ops, roomH: proj.roomH, floor: proj.floor, wall: proj.wall,
-      wallLocks: proj.wallLocks || {}
+      wallLocks: proj.wallLocks || {}, floorLock: proj.floorLock || null
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -869,7 +887,7 @@ class Component extends DCLogic {
       setCurrentProjectId(id);
       this.clearHistory();
       this.setState(Object.assign({
-        projectId: id, projectName: name, wallEditor: null,
+        projectId: id, projectName: name, layoutEditor: null,
         projectModalOpen: false, menu: null, hover: null, sel: { kind: 'wall', i: 0 }
       }, res.data));
     };
@@ -1238,6 +1256,9 @@ class Component extends DCLogic {
   }
 
   addOp(edge, kind) {
+    // Adding an opening to a locked wall would invalidate its frozen
+    // layout, the same reason its length can't be edited either.
+    if (this.isWallLocked(LETTERS[edge] || 'W' + (edge + 1))) return this.setState({ menu: null });
     const room = this.room();
     const w = room.walls.find((x) => x.edge === edge);
     const len = w ? w.len : 2000;
@@ -1256,6 +1277,8 @@ class Component extends DCLogic {
   }
 
   removeOp(index) {
+    const op = this.ops()[index];
+    if (op && this.isWallLocked(LETTERS[op.wall] || 'W' + (op.wall + 1))) return this.setState({ menu: null });
     this.pushHistory();
     const ops = this.ops().filter((_, i) => i !== index);
     this.setState({ ops, poly: this.poly(), menu: null, sel: { kind: 'wall', i: 0 } });
@@ -1265,6 +1288,8 @@ class Component extends DCLogic {
   // on the wall's own segment to where the menu was opened — works the
   // same whether that wall is axis-aligned or at an angle.
   addNode(i, ux, uy) {
+    // Splitting this wall in two would invalidate its frozen layout.
+    if (this.isWallLocked(LETTERS[i] || 'W' + (i + 1))) return this.setState({ menu: null });
     this.pushHistory();
     const poly = this.poly().map((p) => p.slice());
     const a = poly[i], b = poly[(i + 1) % poly.length];
@@ -1284,6 +1309,13 @@ class Component extends DCLogic {
   removeNode(i) {
     const poly = this.poly();
     if (poly.length <= 3) return this.setState({ menu: null });
+    // This node's removal would merge its two adjoining walls into one,
+    // invalidating either one's frozen layout if it has one.
+    const n = poly.length;
+    const prevEdge = (i - 1 + n) % n;
+    if (this.isWallLocked(LETTERS[prevEdge] || 'W' + (prevEdge + 1)) || this.isWallLocked(LETTERS[i] || 'W' + (i + 1))) {
+      return this.setState({ menu: null });
+    }
     this.pushHistory();
     this.setState({
       poly: poly.filter((_, k) => k !== i),
@@ -1471,7 +1503,8 @@ class Component extends DCLogic {
       const c = clipPoly(poly, rectPts(bb.x0 + x, bb.y0 + y, w, h));
       return c.length >= 3 ? [c] : [];
     };
-    return this.layoutTiles(f.type, bb.w, bb.h, f, f.j, clip, { pool: [], nextId: 1 });
+    const lock = this.state.floorLock;
+    return this.layoutTiles(f.type, bb.w, bb.h, f, f.j, clip, { pool: [], nextId: 1 }, 'floor', lock && lock.cols, lock && lock.rows);
   }
 
   // General fallback: cut every opening in `ops` out of rect `t`, each as
@@ -1557,12 +1590,18 @@ class Component extends DCLogic {
     return this.layoutTiles(w.type, len, H, w, w.j, clip, state, wallLetter, lock && lock.cols, lock && lock.rows);
   }
 
-  /* ---------- manual wall-layout editing ---------- */
+  /* ---------- manual tile-layout editing (walls + floor) ---------- */
 
-  // The column/row sizes a wall would use right now if it weren't locked —
-  // seeds the editor, and is what the padlock freezes when locking without
-  // opening the editor first.
-  baseWallSegments(wall) {
+  // The column/row sizes a surface would use right now if it weren't
+  // locked — seeds the editor, and is what the padlock freezes when
+  // locking without opening the editor first. `kind` is 'wall' or
+  // 'floor'; `wall` (a `room().walls` entry) is only needed for 'wall'.
+  baseSegments(kind, wall) {
+    if (kind === 'floor') {
+      const f = this.state.floor;
+      const bb = this.bbox();
+      return { cols: this.axisSegments(f.type, bb.w, f.w, f.j), rows: this.axisSegments(f.type, bb.h, f.h, f.j) };
+    }
     const w = this.state.wall;
     return {
       cols: this.axisSegments(w.type, wall.len, w.w, w.j),
@@ -1574,46 +1613,83 @@ class Component extends DCLogic {
     return !!(this.state.wallLocks && this.state.wallLocks[wallLetter]);
   }
 
+  floorLocked() {
+    return !!this.state.floorLock;
+  }
+
   // Any locked wall takes the global wall-tile settings (block 3) out of
   // play entirely, since those no longer apply uniformly once one wall has
-  // its own frozen layout.
+  // its own frozen layout. The floor's own tile settings are separate and
+  // only affected by `floorLocked()`.
   anyWallLocked() {
     return !!(this.state.wallLocks && Object.keys(this.state.wallLocks).length);
   }
 
-  // Freezes (or un-freezes) a wall's current layout so it stops being
-  // recalculated from the classic/village/basic algorithm.
-  toggleWallLock = (wallLetter, edge) => {
+  // Freezes (or un-freezes) a surface's current layout so it stops being
+  // recalculated from the classic/village/basic algorithm. `key` is a wall
+  // letter for kind 'wall', or ignored for 'floor' (there's only the one).
+  toggleLock = (kind, key, edge) => {
     this.pushHistory();
+    if (kind === 'floor') {
+      this.setState({ floorLock: this.state.floorLock ? null : this.baseSegments('floor') });
+      return;
+    }
     const locks = Object.assign({}, this.state.wallLocks);
-    if (locks[wallLetter]) {
-      delete locks[wallLetter];
+    if (locks[key]) {
+      delete locks[key];
     } else {
       const wall = this.room().walls.find((x) => x.edge === edge);
       if (!wall) return;
-      locks[wallLetter] = this.baseWallSegments(wall);
+      locks[key] = this.baseSegments('wall', wall);
     }
     this.setState({ wallLocks: locks });
   };
 
-  openWallEditor = (wallLetter, edge) => {
-    const wall = this.room().walls.find((x) => x.edge === edge);
-    if (!wall) return;
-    const lock = this.state.wallLocks[wallLetter];
-    const seed = lock || this.baseWallSegments(wall);
-    this.setState({ wallEditor: { wallLetter, edge, cols: seed.cols.slice(), rows: seed.rows.slice() } });
+  openLayoutEditor = (kind, key, edge) => {
+    let seed;
+    if (kind === 'floor') {
+      seed = this.state.floorLock || this.baseSegments('floor');
+    } else {
+      const wall = this.room().walls.find((x) => x.edge === edge);
+      if (!wall) return;
+      seed = this.state.wallLocks[key] || this.baseSegments('wall', wall);
+    }
+    this.setState({ layoutEditor: { kind, key, edge, cols: seed.cols.slice(), rows: seed.rows.slice() } });
   };
 
-  closeWallEditor = () => this.setState({ wallEditor: null });
+  closeLayoutEditor = () => this.setState({ layoutEditor: null });
 
-  saveWallEditor = () => {
-    const we = this.state.wallEditor;
-    if (!we) return;
+  saveLayoutEditor = () => {
+    const le = this.state.layoutEditor;
+    if (!le) return;
     this.pushHistory();
+    if (le.kind === 'floor') {
+      this.setState({ floorLock: { cols: le.cols, rows: le.rows }, layoutEditor: null });
+      return;
+    }
     const locks = Object.assign({}, this.state.wallLocks);
-    locks[we.wallLetter] = { cols: we.cols, rows: we.rows };
-    this.setState({ wallLocks: locks, wallEditor: null });
+    locks[le.key] = { cols: le.cols, rows: le.rows };
+    this.setState({ wallLocks: locks, layoutEditor: null });
   };
+
+  // Shared by every wall sheet and the floor sheet — the icon shape
+  // (closed vs. open padlock, not just a color swap, since a color-only
+  // difference was hard to read at a glance) plus a persistent tinted
+  // background while locked, so the state reads clearly even at rest.
+  lockButtonProps(kind, key, edge, en) {
+    const locked = kind === 'floor' ? this.floorLocked() : this.isWallLocked(key);
+    return {
+      locked,
+      lockIcon: locked ? 'ph-lock' : 'ph-lock-open',
+      lockColor: locked ? 'var(--color-accent)' : 'var(--c-muted)',
+      lockBg: locked ? 'color-mix(in srgb, var(--color-accent) 18%, transparent)' : 'transparent',
+      lockTitle: locked
+        ? (en ? 'Locked — click to unlock and resume automatic layout' : 'Заблокировано — нажмите, чтобы разблокировать и вернуть автоматическую раскладку')
+        : (en ? 'Lock this layout as-is' : 'Заблокировать текущую раскладку'),
+      onToggleLock: () => this.toggleLock(kind, key, edge),
+      onEdit: () => this.openLayoutEditor(kind, key, edge)
+    };
+  }
 
   // Splits a fixed-length span (`regionLen` — the two tiles immediately
   // adjacent to the joint being dragged, which is all a single drag ever
@@ -1629,6 +1705,16 @@ class Component extends DCLogic {
   // case).
   resolveRegion(regionLen, mouseLocalRel, origLeftSize, tileSize, joint) {
     const EPS = 20;
+    // The dragged joint snaps to the exact midpoint between its two
+    // neighboring (fixed) joints when close — an easy way to split
+    // whatever's between them evenly in two, regardless of the configured
+    // tile size.
+    const MID_SNAP = 20;
+    // Equal left/right tiles means `left = regionLen - joint - left`, i.e.
+    // the joint sits at (regionLen - joint) / 2 — not regionLen / 2, which
+    // left the two sides differing by exactly one joint width.
+    const mid = (regionLen - joint) / 2;
+    if (Math.abs(mouseLocalRel - mid) < MID_SNAP) mouseLocalRel = mid;
     const packFromLeft = (span) => {
       const segs = [];
       let consumed = 0;
@@ -1670,28 +1756,55 @@ class Component extends DCLogic {
   startEditJointDrag = (axis, i, e) => {
     e.preventDefault();
     e.stopPropagation();
-    const we = this.state.wallEditor;
-    if (!we) return;
-    const joint = this.state.wall.j;
-    const tileSize = axis === 'col' ? this.state.wall.w : this.state.wall.h;
-    const sizes0 = (axis === 'col' ? we.cols : we.rows).slice();
+    const le = this.state.layoutEditor;
+    if (!le) return;
+    const tile = le.kind === 'floor' ? this.state.floor : this.state.wall;
+    const joint = tile.j;
+    const tileSize = axis === 'col' ? tile.w : tile.h;
+    const sizes0 = (axis === 'col' ? le.cols : le.rows).slice();
     const origLeft = sizes0[i];
     let regionStart = 0;
     for (let k = 0; k < i; k++) regionStart += sizes0[k] + joint;
     const regionLen = sizes0[i] + joint + sizes0[i + 1];
     const H = this.state.roomH;
+    // A wall carries at most one opening, whose edges the joint snaps to
+    // when dragged close — easy to land tiles flush against a door or
+    // window frame. The floor has no such opening to snap to.
+    const OPEN_SNAP = 25;
+    const snapPoints = [];
+    if (le.kind === 'wall') {
+      const wall = this.room().walls.find((x) => x.edge === le.edge);
+      (wall ? wall.op : []).forEach((o) => {
+        if (axis === 'col') snapPoints.push(o.off, o.off + o.w);
+        else snapPoints.push(o.sill, o.sill + o.h);
+      });
+    }
+    const snapToOpening = (v) => {
+      for (const p of snapPoints) if (Math.abs(v - p) < OPEN_SNAP) return p;
+      return v;
+    };
     const move = (ev) => {
-      const p = this.toUser(ev, 'wallEditorSvg');
+      const p = this.toUser(ev, 'layoutEditorSvg');
       if (!p) return;
-      // Rows are stored floor-up but drawn ceiling-down (same convention
+      // Walls are stored floor-up but drawn ceiling-down (same convention
       // as the printed wall sheets), so a row drag's pointer y is flipped
-      // back to wall-local coordinates before use.
-      const raw = axis === 'col' ? p.x : (H - p.y);
+      // back to wall-local coordinates before use. The floor plan is a
+      // plain top-down view, so no flip applies there.
+      const rawY = le.kind === 'wall' ? H - p.y : p.y;
+      const pointerPos = axis === 'col' ? p.x : rawY;
+      // The pointer grabs the joint at its drawn *center*, but everything
+      // downstream (mouseLocal, origLeft, opening edges) is a tile-edge
+      // position — the joint's near edge, half a joint width before its
+      // center. Skipping this correction was invisible for a thin grout
+      // line but made even picking up a thick one silently shift the
+      // layout, since the "no movement yet" pointer position was already
+      // off by half the joint width.
+      const raw = snapToOpening(pointerPos - joint / 2);
       const mouseLocal = Math.max(0, Math.min(regionLen, raw - regionStart));
       const newSegs = this.resolveRegion(regionLen, mouseLocal, origLeft, tileSize, joint);
       const merged = sizes0.slice(0, i).concat(newSegs, sizes0.slice(i + 2));
       this.setState((s) => ({
-        wallEditor: Object.assign({}, s.wallEditor, axis === 'col' ? { cols: merged } : { rows: merged })
+        layoutEditor: Object.assign({}, s.layoutEditor, axis === 'col' ? { cols: merged } : { rows: merged })
       }));
     };
     const up = () => {
@@ -1704,79 +1817,118 @@ class Component extends DCLogic {
 
   // Builds the fullscreen manual-layout editor as a plain element (not a
   // template `sc-if` block) — simplest way to keep its fairly involved,
-  // stateful SVG interaction colocated with the rest of the wall-editing
-  // logic above. Returns null (renders nothing) while no wall is being
-  // edited.
-  renderWallEditor() {
+  // stateful SVG interaction colocated with the rest of the editing logic
+  // above. Returns null (renders nothing) while nothing is being edited.
+  // Branches on `le.kind`: a wall is a plain rectangle hole-cut around its
+  // one opening; the floor is the room's own (possibly non-rectilinear)
+  // polygon, clipped the same way `floorTiles()` does.
+  renderLayoutEditor() {
     const s = this.state;
-    const we = s.wallEditor;
-    if (!we) return null;
+    const le = s.layoutEditor;
+    if (!le) return null;
     const E = React.createElement;
     const en = s.lang === 'en';
-    const r = this.room();
-    const wall = r.walls.find((x) => x.edge === we.edge);
-    if (!wall) return null;
-    const w = s.wall;
-    const H = s.roomH;
-    const L = wall.len;
-    const joint = w.j;
+    const joint = (le.kind === 'floor' ? s.floor : s.wall).j;
     const withPos = (sizes) => {
       let pos = 0;
       return sizes.map((size) => { const start = pos; pos += size + joint; return { size, start }; });
     };
-    const cols = withPos(we.cols);
-    const rows = withPos(we.rows);
-    const ops = wall.op;
+    const cols = withPos(le.cols);
+    const rows = withPos(le.rows);
 
-    const shapes = [];
-    rows.forEach((row) => cols.forEach((col) => {
-      const polys = this.holeRects({ x: col.start, y: row.start, w: col.size, h: row.size }, ops);
-      polys.forEach((p) => shapes.push(p.map((q) => Math.round(q[0]) + ',' + Math.round(H - q[1])).join(' ')));
-    }));
+    let W, H, shapes, holes, title, outlinePts;
+    if (le.kind === 'floor') {
+      const bb = this.bbox();
+      const polyLocal = this.poly().map((p) => [p[0] - bb.x0, p[1] - bb.y0]);
+      W = bb.w; H = bb.h;
+      shapes = [];
+      rows.forEach((row) => cols.forEach((col) => {
+        const c = clipPoly(polyLocal, rectPts(col.start, row.start, col.size, row.size));
+        if (c.length >= 3) shapes.push(c.map((q) => Math.round(q[0]) + ',' + Math.round(q[1])).join(' '));
+      }));
+      holes = [];
+      outlinePts = polyLocal.map((p) => p[0] + ',' + p[1]).join(' ');
+      title = en ? 'Floor' : 'Пол';
+    } else {
+      const wall = this.room().walls.find((x) => x.edge === le.edge);
+      if (!wall) return null;
+      W = wall.len; H = s.roomH;
+      const ops = wall.op;
+      shapes = [];
+      rows.forEach((row) => cols.forEach((col) => {
+        const polys = this.holeRects({ x: col.start, y: row.start, w: col.size, h: row.size }, ops);
+        polys.forEach((p) => shapes.push(p.map((q) => Math.round(q[0]) + ',' + Math.round(H - q[1])).join(' ')));
+      }));
+      holes = ops.map((o) => ({
+        x: o.off, y: H - o.sill - o.h, w: o.w, h: o.h,
+        tx: o.off + o.w / 2, ty: H - o.sill - o.h / 2 + 38,
+        label: o.id + ' ' + o.w + '×' + o.h
+      }));
+      outlinePts = null;
+      title = (en ? 'Wall ' : 'Стена ') + le.key;
+    }
 
     const colJoints = [];
     for (let i = 0; i < cols.length - 1; i++) colJoints.push({ i, x: cols[i].start + cols[i].size + joint / 2 });
     const rowJoints = [];
-    for (let i = 0; i < rows.length - 1; i++) rowJoints.push({ i, y: H - (rows[i].start + rows[i].size + joint / 2) });
+    for (let i = 0; i < rows.length - 1; i++) {
+      const y = le.kind === 'floor'
+        ? rows[i].start + rows[i].size + joint / 2
+        : H - (rows[i].start + rows[i].size + joint / 2);
+      rowJoints.push({ i, y });
+    }
 
-    const holes = ops.map((o) => ({
-      x: o.off, y: H - o.sill - o.h, w: o.w, h: o.h,
-      tx: o.off + o.w / 2, ty: H - o.sill - o.h / 2 + 38,
-      label: o.id + ' ' + o.w + '×' + o.h
+    // Size of every segment, shown right on the drawing — the whole point
+    // of a manual editor is fitting things precisely, so the numbers need
+    // to be visible without hovering each piece.
+    const colLabels = cols.map((col) => ({ x: col.start + col.size / 2, t: String(Math.round(col.size)) }));
+    const rowLabels = rows.map((row) => ({
+      y: le.kind === 'floor' ? row.start + row.size / 2 : H - row.start - row.size / 2,
+      t: String(Math.round(row.size))
     }));
 
-    const mx = Math.max(80, L * 0.05), my = Math.max(80, H * 0.08);
-    const strokeThin = Math.max(3, L * 0.0015);
+    const mx = Math.max(80, W * 0.05), my = Math.max(80, H * 0.08);
+    const strokeThin = Math.max(3, Math.max(W, H) * 0.0015);
     const svg = E('svg', {
-      id: 'wallEditorSvg',
-      viewBox: [-mx, -my, L + mx * 2, H + my * 2].join(' '),
+      id: 'layoutEditorSvg',
+      viewBox: [-mx, -my, W + mx * 2, H + my * 2].join(' '),
       preserveAspectRatio: 'xMidYMid meet',
       style: { width: '100%', height: '100%', display: 'block', touchAction: 'none' }
     },
       shapes.map((pts, i) => E('polygon', { key: 't' + i, points: pts, fill: 'var(--c-tile)', stroke: 'var(--c-tile-line)', strokeWidth: strokeThin })),
       holes.map((h, i) => E('g', { key: 'h' + i },
         E('rect', { x: h.x, y: h.y, width: h.w, height: h.h, fill: 'var(--c-paper)', stroke: 'var(--color-accent)', strokeWidth: strokeThin }),
-        E('text', { x: h.tx, y: h.ty, fontSize: Math.max(60, L * 0.018), fill: 'var(--color-accent)', textAnchor: 'middle' }, h.label)
+        E('text', { x: h.tx, y: h.ty, fontSize: Math.max(60, W * 0.018), fill: 'var(--color-accent)', textAnchor: 'middle' }, h.label)
       )),
-      E('rect', { x: 0, y: 0, width: L, height: H, fill: 'none', stroke: 'var(--color-text)', strokeWidth: strokeThin * 2 }),
+      outlinePts
+        ? E('polygon', { points: outlinePts, fill: 'none', stroke: 'var(--color-text)', strokeWidth: strokeThin * 2 })
+        : E('rect', { x: 0, y: 0, width: W, height: H, fill: 'none', stroke: 'var(--color-text)', strokeWidth: strokeThin * 2 }),
       colJoints.map((cj) => E('g', { key: 'cj' + cj.i },
         E('line', { x1: cj.x, y1: 0, x2: cj.x, y2: H, stroke: 'var(--color-accent)', strokeWidth: strokeThin, pointerEvents: 'none' }),
         E('line', {
-          x1: cj.x, y1: 0, x2: cj.x, y2: H, stroke: 'rgba(128,128,128,0.001)', strokeWidth: Math.max(30, L * 0.015),
+          x1: cj.x, y1: 0, x2: cj.x, y2: H, stroke: 'rgba(128,128,128,0.001)', strokeWidth: Math.max(30, W * 0.015),
           style: { cursor: 'ew-resize' }, onPointerDown: (e) => this.startEditJointDrag('col', cj.i, e)
         })
       )),
       rowJoints.map((rj) => E('g', { key: 'rj' + rj.i },
-        E('line', { x1: 0, y1: rj.y, x2: L, y2: rj.y, stroke: 'var(--color-accent)', strokeWidth: strokeThin, pointerEvents: 'none' }),
+        E('line', { x1: 0, y1: rj.y, x2: W, y2: rj.y, stroke: 'var(--color-accent)', strokeWidth: strokeThin, pointerEvents: 'none' }),
         E('line', {
-          x1: 0, y1: rj.y, x2: L, y2: rj.y, stroke: 'rgba(128,128,128,0.001)', strokeWidth: Math.max(30, H * 0.03),
+          x1: 0, y1: rj.y, x2: W, y2: rj.y, stroke: 'rgba(128,128,128,0.001)', strokeWidth: Math.max(30, H * 0.03),
           style: { cursor: 'ns-resize' }, onPointerDown: (e) => this.startEditJointDrag('row', rj.i, e)
         })
-      ))
+      )),
+      colLabels.map((cl, i) => E('text', {
+        key: 'cl' + i, x: cl.x, y: -my * 0.35, fontSize: Math.max(46, W * 0.013), fill: 'var(--c-muted)',
+        textAnchor: 'middle', pointerEvents: 'none'
+      }, cl.t)),
+      rowLabels.map((rl, i) => E('text', {
+        key: 'rl' + i, x: -mx * 0.75, y: rl.y, fontSize: Math.max(46, H * 0.013), fill: 'var(--c-muted)',
+        textAnchor: 'middle', dominantBaseline: 'middle', pointerEvents: 'none'
+      }, rl.t))
     );
 
     return E('div', {
-      onClick: this.closeWallEditor,
+      onClick: this.closeLayoutEditor,
       style: { position: 'fixed', inset: 0, background: 'color-mix(in srgb, black 55%, transparent)', zIndex: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-6)' }
     },
       E('div', {
@@ -1784,15 +1936,15 @@ class Component extends DCLogic {
         style: { background: 'var(--color-surface)', border: '1px solid var(--c-line)', borderRadius: 'var(--radius-md)', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', padding: 'var(--space-6)', boxShadow: 'var(--shadow-md)', boxSizing: 'border-box' }
       },
         E('div', { style: { display: 'flex', alignItems: 'center', gap: 'var(--space-3)' } },
-          E('span', { style: { fontFamily: 'var(--font-heading)', fontWeight: 500, fontSize: '15px' } }, (en ? 'Wall ' : 'Стена ') + we.wallLetter),
+          E('span', { style: { fontFamily: 'var(--font-heading)', fontWeight: 500, fontSize: '15px' } }, title),
           E('span', { style: { fontSize: '11px', color: 'var(--c-muted)' } },
             en ? 'drag the grout lines to adjust the layout' : 'перетаскивайте швы, чтобы изменить раскладку'),
           E('button', {
-            type: 'button', onClick: this.closeWallEditor,
+            type: 'button', onClick: this.closeLayoutEditor,
             style: { marginLeft: 'auto', background: 'transparent', color: 'var(--c-muted)', border: '1px solid var(--c-line)', borderRadius: 'var(--radius-sm)', padding: '7px 14px', font: 'inherit', fontSize: '12px', cursor: 'pointer' }
           }, en ? 'Cancel' : 'Отмена'),
           E('button', {
-            type: 'button', onClick: this.saveWallEditor,
+            type: 'button', onClick: this.saveLayoutEditor,
             style: { display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'transparent', color: 'var(--color-accent)', border: '1px solid var(--color-accent)', borderRadius: 'var(--radius-sm)', padding: '7px 14px', font: 'inherit', fontSize: '12px', fontWeight: 500, cursor: 'pointer' }
           }, en ? 'Save' : 'Сохранить')
         ),
@@ -2035,22 +2187,45 @@ class Component extends DCLogic {
     /* ---- context menu ---- */
     const menu = s.menu;
     const menuItems = [];
+    const wallLetterAt = (edge) => LETTERS[edge] || 'W' + (edge + 1);
+    // pointer-events:none also suppresses the button's static :hover CSS
+    // (the "style-hover" template attribute can't be bound per sc-for item),
+    // so a disabled entry never shows the accent hover highlight either.
+    const itemStyle = (disabled) => 'display:block;width:100%;text-align:left;background:transparent;color:' +
+      (disabled ? 'var(--c-muted)' : 'var(--color-text)') +
+      ';border:0;padding:6px 12px;font:inherit;font-size:12px;white-space:nowrap;' +
+      (disabled ? 'cursor:default;pointer-events:none;' : 'cursor:pointer;');
+    const mkItem = (label, act, disabled) => ({ label, act: disabled ? undefined : act, style: itemStyle(disabled) });
     if (menu) {
       if (menu.kind === 'node') {
-        menuItems.push({ label: en ? 'Delete node' : 'Удалить узел', act: () => this.removeNode(menu.i) });
+        const n = r.poly.length;
+        const prevEdge = (menu.i - 1 + n) % n;
+        const nodeLocked = this.isWallLocked(wallLetterAt(prevEdge)) || this.isWallLocked(wallLetterAt(menu.i));
+        menuItems.push(nodeLocked
+          ? mkItem(en ? 'Adjacent wall is locked' : 'Соседняя стена заблокирована', null, true)
+          : mkItem(en ? 'Delete node' : 'Удалить узел', () => this.removeNode(menu.i)));
       } else if (menu.kind === 'edge') {
-        // A wall carries at most one opening, so offer to add one only
-        // while it's still empty.
-        const wallForMenu = r.walls.find((w) => w.edge === menu.i);
-        if (!wallForMenu || wallForMenu.op.length === 0) {
-          menuItems.push({ label: en ? 'Add window' : 'Добавить окно', act: () => this.addOp(menu.i, 'win') });
-          menuItems.push({ label: en ? 'Add door' : 'Добавить дверной проём', act: () => this.addOp(menu.i, 'door') });
+        const edgeLocked = this.isWallLocked(wallLetterAt(menu.i));
+        if (edgeLocked) {
+          menuItems.push(mkItem(en ? 'This wall is locked' : 'Эта стена заблокирована', null, true));
+        } else {
+          // A wall carries at most one opening, so offer to add one only
+          // while it's still empty.
+          const wallForMenu = r.walls.find((w) => w.edge === menu.i);
+          if (!wallForMenu || wallForMenu.op.length === 0) {
+            menuItems.push(mkItem(en ? 'Add window' : 'Добавить окно', () => this.addOp(menu.i, 'win')));
+            menuItems.push(mkItem(en ? 'Add door' : 'Добавить дверной проём', () => this.addOp(menu.i, 'door')));
+          }
+          menuItems.push(mkItem(en ? 'Add node here' : 'Добавить узел здесь', () => this.addNode(menu.i, menu.ux, menu.uy)));
         }
-        menuItems.push({ label: en ? 'Add node here' : 'Добавить узел здесь', act: () => this.addNode(menu.i, menu.ux, menu.uy) });
       } else if (menu.kind === 'op') {
-        menuItems.push({ label: en ? 'Delete opening' : 'Удалить проём', act: () => this.removeOp(menu.i) });
+        const opForMenu = this.ops()[menu.i];
+        const opLocked = opForMenu && this.isWallLocked(wallLetterAt(opForMenu.wall));
+        menuItems.push(opLocked
+          ? mkItem(en ? 'This wall is locked' : 'Эта стена заблокирована', null, true)
+          : mkItem(en ? 'Delete opening' : 'Удалить проём', () => this.removeOp(menu.i)));
       } else {
-        menuItems.push({ label: en ? 'Reset outline' : 'Сбросить контур', act: () => this.resetOutline() });
+        menuItems.push(mkItem(en ? 'Reset outline' : 'Сбросить контур', () => this.resetOutline()));
       }
     }
 
@@ -2213,21 +2388,12 @@ class Component extends DCLogic {
         this.dimEls(wDims, 'wd' + w.n)
       );
 
-      const locked = this.isWallLocked(w.n);
-      return {
+      return Object.assign({
         title: (en ? 'Wall ' : 'Стена ') + w.n,
         spec: s.wall.w + '×' + s.wall.h + '×' + s.wall.t + ' · ' + (en ? 'joint ' : 'шов ') + s.wall.j,
         count: tiles.length + (en ? ' pcs' : ' шт'),
-        svg,
-        locked,
-        lockIcon: locked ? 'ph-lock-simple' : 'ph-lock-simple-open',
-        lockColor: locked ? 'var(--color-accent)' : 'var(--c-muted)',
-        lockTitle: locked
-          ? (en ? 'Locked — click to unlock and resume automatic layout' : 'Заблокировано — нажмите, чтобы разблокировать и вернуть автоматическую раскладку')
-          : (en ? 'Lock this wall’s current layout' : 'Заблокировать текущую раскладку этой стены'),
-        onToggleLock: () => this.toggleWallLock(w.n, w.edge),
-        onEdit: () => this.openWallEditor(w.n, w.edge)
-      };
+        svg
+      }, this.lockButtonProps('wall', w.n, w.edge, en));
     });
     // Read after every wall's had a chance to draw from (and add to) the
     // shared pool — only what's still sitting there is genuine leftover.
@@ -2286,7 +2452,7 @@ class Component extends DCLogic {
       onImportFile: this.onImportFile,
 
       planSvg, floorSvg, wallSheets, cuts, sel,
-      wallEditorEl: this.renderWallEditor(),
+      layoutEditorEl: this.renderLayoutEditor(),
       menuOpen: !!menu,
       menuItems,
       menuStyle: menu
@@ -2305,6 +2471,7 @@ class Component extends DCLogic {
       floorW: s.floor.w, floorH: s.floor.h, floorT: s.floor.t, floorJ: s.floor.j, floorType: s.floor.type,
       wallW: s.wall.w, wallH: s.wall.h, wallT: s.wall.t, wallJ: s.wall.j, wallType: s.wall.type,
       wallSettingsLocked: this.anyWallLocked(),
+      floorSettingsLocked: this.floorLocked(),
       floorWKey: 'floorW-' + s.floor.w, floorHKey: 'floorH-' + s.floor.h,
       floorTKey: 'floorT-' + s.floor.t, floorJKey: 'floorJ-' + s.floor.j,
       wallWKey: 'wallW-' + s.wall.w, wallHKey: 'wallH-' + s.wall.h,
@@ -2316,10 +2483,10 @@ class Component extends DCLogic {
       onFloorType: (e) => { this.pushHistory(); this.setState((st) => ({ floor: Object.assign({}, st.floor, { type: e.target.value }) })); },
       onWallType: (e) => { this.pushHistory(); this.setState((st) => ({ wall: Object.assign({}, st.wall, { type: e.target.value }) })); },
 
-      floorSheet: {
+      floorSheet: Object.assign({
         spec: s.floor.w + '×' + s.floor.h + '×' + s.floor.t + ' · ' + (en ? 'joint ' : 'шов ') + s.floor.j,
         count: ft.length + (en ? ' pcs' : ' шт')
-      },
+      }, this.lockButtonProps('floor', 'floor', undefined, en)),
       totals: {
         floor: floorBuy,
         wall: wallBuy,
