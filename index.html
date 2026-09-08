@@ -63,11 +63,21 @@
   ::selection { background: color-mix(in srgb, var(--color-accent) 35%, transparent); }
   @page { size: A4 portrait; margin: 6mm; }
   @media print {
-    :root, :root[data-theme="dark"] {
-      --color-bg: #ffffff; --color-surface: #ffffff; --color-text: #1a1a1f;
-      --c-line: #b2b6ca; --c-muted: #595d6c; --c-paper: #ffffff;
-      --c-tile: #f3f5fe; --c-tile-cut: #e7e5fe; --c-tile-line: #75798c;
-      --color-accent: #5d5294; --color-divider: #cfd3e5;
+    /* Pure black/white/gray, tuned for contrast on a B&W printer rather than
+       for on-screen taste — a whole tile vs. a cut one (--c-tile vs.
+       --c-tile-cut) only needs to stay distinguishable in hue on screen,
+       but two similarly-light colors collapse to the same gray once a
+       printer driver desaturates them, silently erasing that distinction on
+       paper. Listing both theme-attribute selectors (not just "dark") is
+       required, not decorative: `:root[data-theme="light"]`'s own rule
+       matches with higher specificity than a bare `:root`, so without an
+       equally-specific `[data-theme="light"]` selector here, printing while
+       in light theme would keep light theme's own (non-gray) colors. */
+    :root, :root[data-theme="dark"], :root[data-theme="light"] {
+      --color-bg: #ffffff; --color-surface: #ffffff; --color-text: #000000;
+      --c-line: #999999; --c-muted: #444444; --c-paper: #ffffff;
+      --c-tile: #e8e8e8; --c-tile-cut: #8f8f8f; --c-tile-line: #222222;
+      --color-accent: #000000; --color-divider: #bbbbbb;
     }
     [data-noprint] { display: none !important; }
     /* The room plan is normally only shown live in block 1 (with its editing
@@ -324,7 +334,7 @@
           </div>
           <div style="max-height: 214px; overflow: auto; scrollbar-gutter: stable; padding-right: 10px; display: flex; flex-direction: column;">
             <sc-for list="{{ cuts }}" as="c" hint-placeholder-count="8">
-              <div style="display: grid; grid-template-columns: 1fr 84px 46px; gap: var(--space-2); font-size: 12px; padding: 4px 0; border-bottom: 1px solid var(--color-divider);">
+              <div onMouseEnter="{{ c.onEnter }}" onMouseLeave="{{ c.onLeave }}" style="display: grid; grid-template-columns: 1fr 84px 46px; gap: var(--space-2); font-size: 12px; padding: 4px 0; border-bottom: 1px solid var(--color-divider); cursor: default;" style-hover="background: color-mix(in srgb, var(--color-accent) 8%, transparent);">
                 <span style="color: var(--c-muted);">{{ c.where }}</span>
                 <span style="text-align: right; font-variant-numeric: tabular-nums;">{{ c.area }}</span>
                 <span style="text-align: right; color: var(--color-accent); font-variant-numeric: tabular-nums;">{{ c.n }}</span>
@@ -340,11 +350,11 @@
     </section>
 
     <section class="print-section" style="background: var(--color-surface); border: 1px solid var(--c-line); border-radius: var(--radius-md); padding: var(--space-6); display: flex; flex-direction: column; gap: var(--space-6);">
-      <div style="display: flex; align-items: center; gap: var(--space-3);">
+      <div data-noprint="1" style="display: flex; align-items: center; gap: var(--space-3);">
         <div style="width: 20px; height: 20px; border: 1px solid var(--color-accent); border-radius: 3px; color: var(--color-accent); display: grid; place-items: center; font-size: 11px;">4</div>
         <div data-en="Layout drawings" style="font-family: var(--font-heading); font-weight: 500; font-size: 15px;">Раскладка · чертёж</div>
         <div data-en="A4 portrait · one sheet per page · dimensions in mm" style="font-size: 11px; color: var(--c-muted);">A4 книжная · один чертёж на лист · размеры в мм</div>
-        <button type="button" data-noprint="1" onClick="{{ print }}" style="margin-left: auto; display: inline-flex; align-items: center; gap: var(--space-2); background: transparent; color: var(--color-accent); border: 1px solid var(--color-accent); border-radius: var(--radius-sm); padding: 7px 14px; font: inherit; font-size: 12px; cursor: pointer;" style-hover="background: color-mix(in srgb, var(--color-accent) 14%, transparent);">
+        <button type="button" onClick="{{ print }}" style="margin-left: auto; display: inline-flex; align-items: center; gap: var(--space-2); background: transparent; color: var(--color-accent); border: 1px solid var(--color-accent); border-radius: var(--radius-sm); padding: 7px 14px; font: inherit; font-size: 12px; cursor: pointer;" style-hover="background: color-mix(in srgb, var(--color-accent) 14%, transparent);">
           <i class="ph ph-printer" style="font-size: 15px;"></i>
           <span data-en="Print">Печать</span>
         </button>
@@ -390,6 +400,11 @@
         </sc-for>
       </div>
     </section>
+
+    <div data-noprint="1" style="display: flex; flex-direction: column; gap: 2px; padding-top: var(--space-2); font-size: 11px; color: var(--c-muted); text-align: right;">
+      <span data-en="v1.0.0">v1.0.0</span>
+      <span data-en="Written by an AI — no developers were harmed." style="opacity: 0.75; font-style: italic;">Написано искусственным интеллектом — ни один разработчик не пострадал.</span>
+    </div>
   </div>
 </div>
 
@@ -689,6 +704,13 @@ class Component extends DCLogic {
       if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target && e.target.isContentEditable)) return;
       if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'z') return;
       e.preventDefault();
+      // The layout editor's own undo stack takes over completely while it's
+      // open — the room-design history underneath stays frozen until it
+      // closes, rather than the two stacks interleaving confusingly.
+      if (this.state.layoutEditor) {
+        if (e.shiftKey) this.redoLayoutEditor(); else this.undoLayoutEditor();
+        return;
+      }
       if (e.shiftKey) this.redo(); else this.undo();
     };
     window.addEventListener('keydown', this.onKeyDown);
@@ -762,6 +784,47 @@ class Component extends DCLogic {
     const next = this.histFuture.pop();
     this.histPast.push(this.historySnapshot());
     this.setState(Object.assign({ menu: null, hover: null, sel: { kind: 'wall', i: 0 } }, next));
+  };
+
+  // The manual layout editor gets its own undo stack, entirely separate
+  // from the room-design one above — while it's open, Ctrl+Z should step
+  // back through *its* joint drags, not silently rewrite the room's poly/
+  // ops from some earlier, unrelated edit underneath the open modal. Only
+  // cols/rows are tracked (the editor's own working draft); which surface
+  // is being edited (kind/key/edge) never changes during a single session.
+  layoutEditorHistPast = [];
+  layoutEditorHistFuture = [];
+
+  clearLayoutEditorHistory() {
+    this.layoutEditorHistPast = [];
+    this.layoutEditorHistFuture = [];
+  }
+
+  layoutEditorSnapshot() {
+    const le = this.state.layoutEditor;
+    return le ? JSON.parse(JSON.stringify({ cols: le.cols, rows: le.rows })) : null;
+  }
+
+  pushLayoutEditorHistory() {
+    const snap = this.layoutEditorSnapshot();
+    if (!snap) return;
+    this.layoutEditorHistPast.push(snap);
+    this.layoutEditorHistFuture = [];
+    if (this.layoutEditorHistPast.length > 100) this.layoutEditorHistPast.shift();
+  }
+
+  undoLayoutEditor = () => {
+    if (!this.layoutEditorHistPast.length) return;
+    const prev = this.layoutEditorHistPast.pop();
+    this.layoutEditorHistFuture.push(this.layoutEditorSnapshot());
+    this.setState((s) => ({ layoutEditor: Object.assign({}, s.layoutEditor, prev) }));
+  };
+
+  redoLayoutEditor = () => {
+    if (!this.layoutEditorHistFuture.length) return;
+    const next = this.layoutEditorHistFuture.pop();
+    this.layoutEditorHistPast.push(this.layoutEditorSnapshot());
+    this.setState((s) => ({ layoutEditor: Object.assign({}, s.layoutEditor, next) }));
   };
 
   // Runs after every update — cheap enough (one small JSON blob) that it's
@@ -1024,7 +1087,7 @@ class Component extends DCLogic {
         const h = Math.min(o.h, H - 100);
         op.push({ kind: o.kind, id: o.id, off, w, h, sill: Math.min(o.sill, H - h - 50), index: oi });
       });
-      walls.push({ n: LETTERS[i] || 'W' + (i + 1), edge: i, a, b, len, op });
+      walls.push({ n: this.wallKey(i), edge: i, a, b, len, op });
     }
     return { H, poly, walls };
   }
@@ -1055,7 +1118,7 @@ class Component extends DCLogic {
     const poly = this.poly();
     const n = poly.length;
     const prevEdge = (i - 1 + n) % n;
-    if (this.isWallLocked(LETTERS[prevEdge] || 'W' + (prevEdge + 1)) || this.isWallLocked(LETTERS[i] || 'W' + (i + 1))) return;
+    if (this.isWallLocked(this.wallKey(prevEdge)) || this.isWallLocked(this.wallKey(i))) return;
     e.preventDefault();
     e.stopPropagation();
     this.pushHistory();
@@ -1121,7 +1184,7 @@ class Component extends DCLogic {
     const prevEdge = (edge - 1 + basePolyN) % basePolyN, nextEdge = (edge + 1) % basePolyN;
     // Sliding this wall changes the length of both neighbors (and moves
     // this wall itself) — refuse if any of the three has a locked layout.
-    if ([prevEdge, edge, nextEdge].some((k) => this.isWallLocked(LETTERS[k] || 'W' + (k + 1)))) return;
+    if ([prevEdge, edge, nextEdge].some((k) => this.isWallLocked(this.wallKey(k)))) return;
     e.preventDefault();
     e.stopPropagation();
     this.pushHistory();
@@ -1186,7 +1249,7 @@ class Component extends DCLogic {
     const op = this.ops()[index];
     // Sliding an opening along a locked wall would invalidate its frozen
     // layout, same as adding/removing one.
-    if (op && this.isWallLocked(LETTERS[op.wall] || 'W' + (op.wall + 1))) return;
+    if (op && this.isWallLocked(this.wallKey(op.wall))) return;
     e.preventDefault();
     e.stopPropagation();
     this.pushHistory();
@@ -1282,7 +1345,7 @@ class Component extends DCLogic {
   addOp(edge, kind) {
     // Adding an opening to a locked wall would invalidate its frozen
     // layout, the same reason its length can't be edited either.
-    if (this.isWallLocked(LETTERS[edge] || 'W' + (edge + 1))) return this.setState({ menu: null });
+    if (this.isWallLocked(this.wallKey(edge))) return this.setState({ menu: null });
     const room = this.room();
     const w = room.walls.find((x) => x.edge === edge);
     const len = w ? w.len : 2000;
@@ -1302,7 +1365,7 @@ class Component extends DCLogic {
 
   removeOp(index) {
     const op = this.ops()[index];
-    if (op && this.isWallLocked(LETTERS[op.wall] || 'W' + (op.wall + 1))) return this.setState({ menu: null });
+    if (op && this.isWallLocked(this.wallKey(op.wall))) return this.setState({ menu: null });
     this.pushHistory();
     const ops = this.ops().filter((_, i) => i !== index);
     this.setState({ ops, poly: this.poly(), menu: null, sel: { kind: 'wall', i: 0 } });
@@ -1313,7 +1376,7 @@ class Component extends DCLogic {
   // same whether that wall is axis-aligned or at an angle.
   addNode(i, ux, uy) {
     // Splitting this wall in two would invalidate its frozen layout.
-    if (this.isWallLocked(LETTERS[i] || 'W' + (i + 1))) return this.setState({ menu: null });
+    if (this.isWallLocked(this.wallKey(i))) return this.setState({ menu: null });
     this.pushHistory();
     const poly = this.poly().map((p) => p.slice());
     const a = poly[i], b = poly[(i + 1) % poly.length];
@@ -1323,7 +1386,7 @@ class Component extends DCLogic {
     t = Math.max(0.05, Math.min(0.95, t));
     const pt = [Math.round(a[0] + dx * t), Math.round(a[1] + dy * t)];
     poly.splice(i + 1, 0, pt);
-    this.setState({ poly, ops: this.shiftOps(i + 1, 1), menu: null });
+    this.setState({ poly, ops: this.shiftOps(i + 1, 1), wallLocks: this.shiftWallLocks(i + 1, 1), menu: null });
   }
 
   // Any closed shape needs at least 3 nodes; below that there's no room
@@ -1337,13 +1400,14 @@ class Component extends DCLogic {
     // invalidating either one's frozen layout if it has one.
     const n = poly.length;
     const prevEdge = (i - 1 + n) % n;
-    if (this.isWallLocked(LETTERS[prevEdge] || 'W' + (prevEdge + 1)) || this.isWallLocked(LETTERS[i] || 'W' + (i + 1))) {
+    if (this.isWallLocked(this.wallKey(prevEdge)) || this.isWallLocked(this.wallKey(i))) {
       return this.setState({ menu: null });
     }
     this.pushHistory();
     this.setState({
       poly: poly.filter((_, k) => k !== i),
       ops: this.shiftOps(i + 1, -1).filter((o) => o.wall >= 0),
+      wallLocks: this.shiftWallLocks(i + 1, -1),
       menu: null, sel: { kind: 'wall', i: 0 }
     });
   }
@@ -1664,6 +1728,40 @@ class Component extends DCLogic {
     return !!(this.state.wallLocks && this.state.wallLocks[wallLetter]);
   }
 
+  wallKey(edge) {
+    return LETTERS[edge] || 'W' + (edge + 1);
+  }
+
+  // Inverse of `wallKey` — recovers the edge index a lock key was assigned
+  // for, so the key can be recomputed after that edge's index shifts.
+  edgeForWallKey(key) {
+    const li = LETTERS.indexOf(key);
+    if (li >= 0) return li;
+    const m = /^W(\d+)$/.exec(key);
+    return m ? parseInt(m[1], 10) - 1 : -1;
+  }
+
+  // A wall's lock key is just its letter, which is derived from its edge
+  // index — but that index shifts whenever `addNode`/`removeNode` changes
+  // how many edges come before it. Without this, splitting or merging a
+  // wall elsewhere in the room silently detached a lock from the physical
+  // wall it was set on and reattached it (under the same old letter) to
+  // whatever wall happened to land on that edge index instead — the lock
+  // would appear to "jump" to a different wall, and the wall it was
+  // actually protecting would quietly unlock. Called alongside `shiftOps`
+  // with the same `(at, delta)` so both stay in sync.
+  shiftWallLocks(at, delta) {
+    const locks = this.state.wallLocks;
+    if (!locks || !Object.keys(locks).length) return locks || {};
+    const out = {};
+    Object.keys(locks).forEach((key) => {
+      const edge = this.edgeForWallKey(key);
+      const newEdge = edge >= at ? edge + delta : edge;
+      out[this.wallKey(newEdge)] = locks[key];
+    });
+    return out;
+  }
+
   floorLocked() {
     return !!this.state.floorLock;
   }
@@ -1705,6 +1803,7 @@ class Component extends DCLogic {
       if (!wall) return;
       seed = this.state.wallLocks[key] || this.baseSegments('wall', wall);
     }
+    this.clearLayoutEditorHistory();
     this.setState({ layoutEditor: { kind, key, edge, cols: seed.cols.slice(), rows: seed.rows.slice() } });
   };
 
@@ -1754,18 +1853,22 @@ class Component extends DCLogic {
   // (shrinking) side stays a single segment, dropped entirely once the
   // drag pushes it down near zero (the "joint merges into its neighbor"
   // case).
-  resolveRegion(regionLen, mouseLocalRel, origLeftSize, tileSize, joint) {
+  resolveRegion(regionLen, mouseLocalRel, origLeftSize, tileSize, joint, skipMidSnap) {
     const EPS = 20;
     // The dragged joint snaps to the exact midpoint between its two
     // neighboring (fixed) joints when close — an easy way to split
     // whatever's between them evenly in two, regardless of the configured
-    // tile size.
+    // tile size. Skipped when the caller already snapped this position to
+    // an opening's edge — otherwise the midpoint (which has no idea an
+    // opening exists) can silently overrule a deliberate opening-snap just
+    // because the two happen to land within `MID_SNAP` of each other,
+    // dragging the joint away from the opening it was just snapped to.
     const MID_SNAP = 20;
     // Equal left/right tiles means `left = regionLen - joint - left`, i.e.
     // the joint sits at (regionLen - joint) / 2 — not regionLen / 2, which
     // left the two sides differing by exactly one joint width.
     const mid = (regionLen - joint) / 2;
-    if (Math.abs(mouseLocalRel - mid) < MID_SNAP) mouseLocalRel = mid;
+    if (!skipMidSnap && Math.abs(mouseLocalRel - mid) < MID_SNAP) mouseLocalRel = mid;
     const packFromLeft = (span) => {
       const segs = [];
       let consumed = 0;
@@ -1791,13 +1894,28 @@ class Component extends DCLogic {
       const rightRem = regionLen - mouseLocalRel - joint;
       if (rightRem > EPS) return leftSegs.concat([rightRem]);
       if (!leftSegs.length) return [regionLen];
-      leftSegs[leftSegs.length - 1] += joint + Math.max(0, rightRem);
+      // `rightRem` can go negative once the drag overshoots past the point
+      // where the shrinking side already merged away (mouseLocalRel is
+      // clamped to `regionLen` by the caller, but `regionLen - joint` — the
+      // point past which rightRem turns negative — is reached well before
+      // that clamp). Clamping it to 0 here used to silently keep adding a
+      // positive `joint` to the last tile for every bit of further drag
+      // past that point (up to a full joint's width at the hard clamp),
+      // growing that tile past its configured size and dragging everything
+      // after it in the array along with it. `joint + rightRem` is exact
+      // for any sign of `rightRem` — it's what keeps the total at
+      // `regionLen` regardless of how far past the merge point the drag
+      // goes.
+      leftSegs[leftSegs.length - 1] += joint + rightRem;
       return leftSegs;
     }
     const rightSegs = packFromRight(regionLen - mouseLocalRel - joint);
     if (mouseLocalRel > EPS) return [mouseLocalRel].concat(rightSegs);
     if (!rightSegs.length) return [regionLen];
-    rightSegs[0] += joint + Math.max(0, mouseLocalRel);
+    // No `Math.max(0, ...)` needed here, unlike the mirror branch above —
+    // the caller already clamps `mouseLocalRel` to a hard floor of 0, so it
+    // can never go negative and cause the same overshoot.
+    rightSegs[0] += joint + mouseLocalRel;
     return rightSegs;
   }
 
@@ -1809,6 +1927,7 @@ class Component extends DCLogic {
     e.stopPropagation();
     const le = this.state.layoutEditor;
     if (!le) return;
+    this.pushLayoutEditorHistory();
     const tile = le.kind === 'floor' ? this.state.floor : this.state.wall;
     const joint = tile.j;
     const tileSize = axis === 'col' ? tile.w : tile.h;
@@ -1820,14 +1939,25 @@ class Component extends DCLogic {
     const H = this.state.roomH;
     // A wall carries at most one opening, whose edges the joint snaps to
     // when dragged close — easy to land tiles flush against a door or
-    // window frame. The floor has no such opening to snap to.
+    // window frame. The floor has no such opening to snap to. The target is
+    // the edge minus half a joint, not the edge itself: `mouseLocal` is a
+    // boundary in tile-edge space, and the grout this joint draws spans
+    // `[boundary, boundary + joint]` — landing the boundary *on* the
+    // opening's edge buries the entire joint width inside the opening
+    // (invisible, and for a thick joint the tile visibly sits flush with
+    // no seam at all rather than "stuck" to anything). Offsetting by
+    // joint/2 instead centers the joint itself on the opening's edge, half
+    // showing against the wall and half swallowed by the opening — the
+    // joint snaps *by its middle*, matching every other snap in this
+    // editor (the pointer's own grab point, the midpoint-of-two-neighbors
+    // snap) which are likewise all defined in terms of the joint's center.
     const OPEN_SNAP = 25;
     const snapPoints = [];
     if (le.kind === 'wall') {
       const wall = this.room().walls.find((x) => x.edge === le.edge);
       (wall ? wall.op : []).forEach((o) => {
-        if (axis === 'col') snapPoints.push(o.off, o.off + o.w);
-        else snapPoints.push(o.sill, o.sill + o.h);
+        if (axis === 'col') snapPoints.push(o.off - joint / 2, o.off + o.w - joint / 2);
+        else snapPoints.push(o.sill - joint / 2, o.sill + o.h - joint / 2);
       });
     }
     const snapToOpening = (v) => {
@@ -1850,9 +1980,12 @@ class Component extends DCLogic {
       // line but made even picking up a thick one silently shift the
       // layout, since the "no movement yet" pointer position was already
       // off by half the joint width.
-      const raw = snapToOpening(pointerPos - joint / 2);
+      const preSnap = pointerPos - joint / 2;
+      const raw = snapToOpening(preSnap);
       const mouseLocal = Math.max(0, Math.min(regionLen, raw - regionStart));
-      const newSegs = this.resolveRegion(regionLen, mouseLocal, origLeft, tileSize, joint);
+      // An opening-snap just decided this position deliberately — don't let
+      // resolveRegion's own midpoint-of-two-neighbors snap second-guess it.
+      const newSegs = this.resolveRegion(regionLen, mouseLocal, origLeft, tileSize, joint, raw !== preSnap);
       const merged = sizes0.slice(0, i).concat(newSegs, sizes0.slice(i + 2));
       this.setState((s) => ({
         layoutEditor: Object.assign({}, s.layoutEditor, axis === 'col' ? { cols: merged } : { rows: merged })
@@ -2238,7 +2371,7 @@ class Component extends DCLogic {
     /* ---- context menu ---- */
     const menu = s.menu;
     const menuItems = [];
-    const wallLetterAt = (edge) => LETTERS[edge] || 'W' + (edge + 1);
+    const wallLetterAt = (edge) => this.wallKey(edge);
     // pointer-events:none also suppresses the button's static :hover CSS
     // (the "style-hover" template attribute can't be bound per sc-for item),
     // so a disabled entry never shows the accent hover highlight either.
@@ -2283,18 +2416,20 @@ class Component extends DCLogic {
     /* ---- take-off ---- */
     const floorLayout = this.floorTiles();
     const ft = floorLayout.tiles;
-    // Off-cuts are irregular polygons in general (a floor piece can be
-    // clipped by an angled wall), so they're grouped and reported by area
-    // rather than a W×H size — the grouping key rounds to the nearest
-    // 0.001 m² to merge near-identical pieces despite float noise. Only
+    // Every leftover the reuse pool ever hands out is, by construction, a
+    // simple axis-aligned w×h rectangle (see `giveRemainderOf` in
+    // `layoutTiles`) — even for the floor, whose installed pieces can be
+    // irregular polygons where they meet an angled wall. That makes an
+    // exact-size grouping key safe and lets each row carry a real w/h for
+    // the hover preview, rather than only a rounded total area. Only
     // pieces still sitting unclaimed in a layout's leftover pool at the
     // end (never picked up by a later cut) are genuine waste.
     const cutMap = new Map();
     const addLeftover = (where, o) => {
-      const areaMm = o.w * o.h;
-      const k = where + '|' + Math.round(areaMm / 1000);
+      const w = Math.round(o.w), h = Math.round(o.h);
+      const k = where + '|' + w + 'x' + h;
       const cur = cutMap.get(k);
-      if (cur) cur.n++; else cutMap.set(k, { where, areaMm, n: 1 });
+      if (cur) cur.n++; else cutMap.set(k, { where, areaMm: o.w * o.h, w, h, n: 1 });
     };
     floorLayout.leftovers.forEach((o) => addLeftover(en ? 'floor' : 'пол', o));
 
@@ -2459,7 +2594,14 @@ class Component extends DCLogic {
     const floorBuy = ft.filter((t) => !t.reused).length;
     const floorArea = polyArea(r.poly) / 1e6;
     const cuts = Array.from(cutMap.values())
-      .map((c) => ({ where: c.where, area: (c.areaMm / 1e6).toFixed(3) + ' м²', n: c.n }))
+      .map((c) => ({
+        where: c.where, area: (c.areaMm / 1e6).toFixed(3) + ' м²', n: c.n,
+        // Reuses the same hover-preview mechanism as a reused tile inside a
+        // printed sheet (`setDimHover`/`dimHoverSvg`) — a synthetic
+        // rectangle poly stands in for the tile polygon it'd normally get.
+        onEnter: (e) => this.setDimHover([[0, 0], [c.w, 0], [c.w, c.h], [0, c.h]], e.currentTarget.getBoundingClientRect()),
+        onLeave: () => this.clearDimHover()
+      }))
       .sort((a, b) => b.n - a.n);
     // What's actually charged for is only the tiles bought (whole ones and
     // the ones a cut piece was freshly sawn from); a reused off-cut adds to
