@@ -283,6 +283,10 @@
 
         <div style="display: flex; flex-direction: column; gap: var(--space-4);">
           <div data-en="Totals" style="font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--c-muted);">Итого плиток</div>
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--c-muted); cursor: pointer;">
+            <input type="checkbox" checked="{{ reuseOffcuts }}" onChange="{{ onReuseOffcuts }}" style="cursor: pointer;"></input>
+            <span data-en="Reuse off-cuts">Переиспользовать обрезки</span>
+          </label>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
             <div style="border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: var(--space-4);">
               <div style="font-family: var(--font-heading); font-size: 26px; letter-spacing: -0.02em;">{{ totals.floor }}</div>
@@ -550,7 +554,8 @@ function normalizeProjectData(raw) {
   // Added after v1 shipped — optional, so older saves without it still load.
   const wallLocks = (raw.wallLocks && typeof raw.wallLocks === 'object') ? raw.wallLocks : {};
   const floorLock = (raw.floorLock && typeof raw.floorLock === 'object') ? raw.floorLock : null;
-  return { ok: true, data: { poly: raw.poly, ops: raw.ops, roomH: raw.roomH, floor: raw.floor, wall: raw.wall, wallLocks, floorLock } };
+  const reuseOffcuts = raw.reuseOffcuts !== false;
+  return { ok: true, data: { poly: raw.poly, ops: raw.ops, roomH: raw.roomH, floor: raw.floor, wall: raw.wall, wallLocks, floorLock, reuseOffcuts } };
 }
 
 function loadProjectList() {
@@ -582,7 +587,8 @@ function projectSnapshot(id, name, s) {
   return {
     id, name, version: PROJECT_SAVE_VERSION, savedAt: Date.now(),
     poly: s.poly, ops: s.ops, roomH: s.roomH, floor: s.floor, wall: s.wall,
-    wallLocks: s.wallLocks || {}, floorLock: s.floorLock || null
+    wallLocks: s.wallLocks || {}, floorLock: s.floorLock || null,
+    reuseOffcuts: s.reuseOffcuts !== false
   };
 }
 
@@ -616,6 +622,7 @@ class Component extends DCLogic {
       dimHover: null,
       floor: { w: 600, h: 600, j: 2, type: 'classic' },
       wall: { w: 600, h: 600, j: 2, type: 'classic' },
+      reuseOffcuts: true,
       // Manually edited & frozen wall layouts, keyed by wall letter — see
       // `wallTiles()`. A wall with an entry here skips the automatic
       // classic/village/basic layout entirely and uses these column/row
@@ -633,6 +640,7 @@ class Component extends DCLogic {
     return Object.assign({}, base, {
       poly: proj.poly, ops: proj.ops, roomH: proj.roomH, floor: proj.floor, wall: proj.wall,
       wallLocks: proj.wallLocks || {}, floorLock: proj.floorLock || null,
+      reuseOffcuts: proj.reuseOffcuts !== false,
       projectId: proj.id, projectName: proj.name
     });
   })();
@@ -733,7 +741,7 @@ class Component extends DCLogic {
 
   historySnapshot() {
     const s = this.state;
-    return JSON.parse(JSON.stringify({ poly: s.poly, ops: s.ops, roomH: s.roomH, floor: s.floor, wall: s.wall, wallLocks: s.wallLocks, floorLock: s.floorLock }));
+    return JSON.parse(JSON.stringify({ poly: s.poly, ops: s.ops, roomH: s.roomH, floor: s.floor, wall: s.wall, wallLocks: s.wallLocks, floorLock: s.floorLock, reuseOffcuts: s.reuseOffcuts !== false }));
   }
 
   pushHistory() {
@@ -778,6 +786,7 @@ class Component extends DCLogic {
     this.setState({
       poly: proj.poly, ops: proj.ops, roomH: proj.roomH, floor: proj.floor, wall: proj.wall,
       wallLocks: proj.wallLocks || {}, floorLock: proj.floorLock || null, layoutEditor: null,
+      reuseOffcuts: proj.reuseOffcuts !== false,
       projectId: proj.id, projectName: proj.name,
       projectModalOpen: false, menu: null, hover: null, sel: { kind: 'wall', i: 0 }
     });
@@ -808,6 +817,7 @@ class Component extends DCLogic {
       this.setState({
         poly: next.poly, ops: next.ops, roomH: next.roomH, floor: next.floor, wall: next.wall,
         wallLocks: next.wallLocks || {}, floorLock: next.floorLock || null, layoutEditor: null,
+        reuseOffcuts: next.reuseOffcuts !== false,
         projectId: next.id, projectName: next.name,
         menu: null, hover: null, sel: { kind: 'wall', i: 0 }
       });
@@ -825,12 +835,12 @@ class Component extends DCLogic {
     const floor = { w: 600, h: 600, j: 2, type: 'classic' };
     const wall = { w: 600, h: 600, j: 2, type: 'classic' };
     const list = loadProjectList();
-    list.push({ id, name, savedAt: Date.now(), poly: null, ops: null, roomH: 2500, floor, wall });
+    list.push({ id, name, savedAt: Date.now(), poly: null, ops: null, roomH: 2500, floor, wall, reuseOffcuts: true });
     saveProjectList(list);
     setCurrentProjectId(id);
     this.clearHistory();
     this.setState({
-      poly: null, ops: null, roomH: 2500, floor, wall,
+      poly: null, ops: null, roomH: 2500, floor, wall, reuseOffcuts: true,
       wallLocks: {}, floorLock: null, layoutEditor: null,
       projectId: id, projectName: name,
       projectModalOpen: false, menu: null, hover: null, sel: { kind: 'wall', i: 0 }
@@ -850,7 +860,8 @@ class Component extends DCLogic {
     const data = {
       version: PROJECT_SAVE_VERSION, name: proj.name,
       poly: proj.poly, ops: proj.ops, roomH: proj.roomH, floor: proj.floor, wall: proj.wall,
-      wallLocks: proj.wallLocks || {}, floorLock: proj.floorLock || null
+      wallLocks: proj.wallLocks || {}, floorLock: proj.floorLock || null,
+      reuseOffcuts: proj.reuseOffcuts !== false
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -1498,18 +1509,29 @@ class Component extends DCLogic {
         }
         const cutX = Math.abs(effW - tile.w) > 1, cutY = Math.abs(effH - tile.h) > 1;
 
+        // The larger of the two strips a straight cut leaves out of a
+        // `sourceW × sourceH` piece, once `effW × effH` has been taken from
+        // it — used both when a fresh tile is cut down and, recursively,
+        // when a pool leftover bigger than what's needed here is cut down
+        // further. Giving that remainder back to the pool (instead of
+        // discarding it) is what lets an off-cut be reused more than once.
+        const giveRemainderOf = (sourceW, sourceH, id) => {
+          const optA = { w: sourceW - effW, h: sourceH };
+          const optB = { w: sourceW, h: sourceH - effH };
+          const leftover = optA.w * optA.h >= optB.w * optB.h ? optA : optB;
+          give(leftover.w, leftover.h, id);
+        };
+
         let id = null, reused = false;
         if (cutX || cutY) {
-          const got = take(effW, effH);
+          const got = this.state.reuseOffcuts !== false ? take(effW, effH) : null;
           if (got) {
             id = got.id;
             reused = true;
+            giveRemainderOf(got.w, got.h, id);
           } else {
             id = state.nextId++;
-            const optA = { w: tile.w - effW, h: tile.h };
-            const optB = { w: tile.w, h: tile.h - effH };
-            const leftover = optA.w * optA.h >= optB.w * optB.h ? optA : optB;
-            give(leftover.w, leftover.h, id);
+            giveRemainderOf(tile.w, tile.h, id);
           }
         }
         const full = !cutX && !cutY && used >= tileArea - 1000;
@@ -2511,6 +2533,8 @@ class Component extends DCLogic {
       onWallJ: (e) => this.set('wall', 'j', e),
       onFloorType: (e) => { this.pushHistory(); this.setState((st) => ({ floor: Object.assign({}, st.floor, { type: e.target.value }) })); },
       onWallType: (e) => { this.pushHistory(); this.setState((st) => ({ wall: Object.assign({}, st.wall, { type: e.target.value }) })); },
+      reuseOffcuts: s.reuseOffcuts !== false,
+      onReuseOffcuts: (e) => { this.pushHistory(); this.setState({ reuseOffcuts: e.target.checked }); },
 
       floorSheet: Object.assign({
         spec: s.floor.w + '×' + s.floor.h + ' · ' + (en ? 'joint ' : 'шов ') + s.floor.j,
